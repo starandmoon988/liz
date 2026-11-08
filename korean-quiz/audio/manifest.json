@@ -1,0 +1,32 @@
+{
+  "n1": {
+    "text": "총 투자액은 삼억 오천만 원입니다.",
+    "voice": "ko-KR-SunHiNeural",
+    "kind": "合成语音"
+  },
+  "n2": {
+    "text": "参会人数为两万三千五百人，同比增长百分之十五。",
+    "voice": "zh-CN-XiaoxiaoNeural",
+    "kind": "合成语音"
+  },
+  "g1": {
+    "text": "오후 세 시 십오 분에 만나요.",
+    "voice": "ko-KR-SunHiNeural",
+    "kind": "合成语音"
+  },
+  "g2": {
+    "text": "동생은 스무 살이고, 형은 스물한 살이에요.",
+    "voice": "ko-KR-SunHiNeural",
+    "kind": "合成语音"
+  },
+  "p1": {
+    "text": "국물",
+    "voice": "ko-KR-SunHiNeural",
+    "kind": "合成语音"
+  },
+  "p2": {
+    "text": "같이. 가치.",
+    "voice": "ko-KR-SunHiNeural",
+    "kind": "合成语音"
+  }
+}
