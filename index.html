@@ -44,7 +44,48 @@ function choices(w){let x=WORDS.find(v=>v.w===w),others=WORDS.filter(v=>v.w!==w&
 function makeMeaning(w,variant=0){let x=WORDS.find(v=>v.w===w);if(x?.dictionary)return batchMeaning(x);let o=choices(w);if(variant){let syn=x.syn.split(';')[0];return {w,type:'single',q:`Which word is closest in meaning to “${syn}”?`,opts:[w,...WORDS.filter(v=>v.w!==w).slice(0,3).map(v=>v.w)],a:0,ex:`“${w}” can mean ${x.zh}.`,label:'变式复测'}}let rare=RARE_SENSES[w];if(rare){let other=WORDS.filter(v=>v.w!==w&&!v.zh.includes(rare.meaning)).slice(0,3).map(v=>v.zh);let opts=[rare.meaning,...other];let shift=(WORDS.findIndex(v=>v.w===w)%4);opts=[...opts.slice(shift),...opts.slice(0,shift)];return {w,type:'single',q:rare.stem,opts,a:opts.indexOf(rare.meaning),ex:rare.note,label:'第一轮 · 中文识义 · 熟词僻义',rare:true}}return {w,type:'single',q:`${w} 的中文意思是？`,opts:o.opts,a:o.opts.indexOf(o.answer),ex:`“${w}” means ${x.zh}.`,label:'第一轮 · 中文识义'}}
 function build(s){stage=s;idx=0;results=[];if(s===1)quiz=BASE_WORDS.filter(x=>!LISTEN.includes(x.w)).map(x=>makeMeaning(x.w));if(s===2)quiz=LISTEN.map(w=>({w,type:'spell',q:'Listen and write the word.',a:w,ex:`The correct spelling is “${w}”.`,label:'第二轮 · 听力拼写'}));if(s===3)quiz=CONTEXT.map(x=>({...x,label:'第三轮 · 语境与用法'}));if(s===4){let due=Object.values(db.errors).filter(e=>(e.pending||0)>0||!e.next||e.next<=today()).sort((a,b)=>(b.misses||0)-(a.misses||0)).slice(0,15).map(e=>e.word);let other=WORDS.filter(x=>db.attempts[x.w]&&!db.errors[x.w]&&x.syn).slice(0,5).map(x=>x.w);let chosenWords=[...new Set([...due,...other])].slice(0,20);if(!chosenWords.length){$('main').innerHTML='<section class="panel"><h2>暂无旧词任务</h2><p>先完成新词测试。旧词不强行凑满20个。</p></section>';return}quiz=chosenWords.map(w=>{let e=db.errors[w];return e?.pending?makeMeaning(w,1):makeMeaning(w,0)})}render()}
 function choose(i){if(locked)return;chosen=i;document.querySelectorAll('.opt').forEach((b,j)=>b.classList.toggle('sel',i===j))}
-let speechTimer=null;function speak(w){if(!window.speechSynthesis){alert('此浏览器不支持语音合成');return}if(speechTimer)clearTimeout(speechTimer);speechSynthesis.cancel();speechTimer=setTimeout(()=>{let u=new SpeechSynthesisUtterance(w);u.lang='en-GB';u.rate=.86;let voices=speechSynthesis.getVoices();let voice=voices.find(v=>v.lang.toLowerCase()==='en-gb'&&v.localService)||voices.find(v=>v.lang.toLowerCase()==='en-gb');if(voice)u.voice=voice;u.onerror=(ev)=>{if(ev.error!=='canceled'&&ev.error!=='interrupted')console.warn('Speech playback:',ev.error)};speechSynthesis.speak(u);if(speechSynthesis.paused)speechSynthesis.resume()},65)}
+
+let speechTimer=null,pronunciationTicket=0,pronunciationAudio=null;
+function stopPronunciation(){
+ pronunciationTicket++;
+ if(speechTimer)clearTimeout(speechTimer);
+ if(window.speechSynthesis)window.speechSynthesis.cancel();
+ if(pronunciationAudio){pronunciationAudio.pause();pronunciationAudio=null}
+}
+function pronunciationNote(message){
+ const main=$('main');if(!main)return;
+ let note=$('pronunciation-status');
+ if(!note){note=document.createElement('p');note.id='pronunciation-status';note.className='muted';note.setAttribute('role','status');main.append(note)}
+ note.textContent=message;
+}
+async function pronunciationFallback(word,ticket){
+ try{
+ let item=WORDS.find(x=>x.w===word),audioUrl=item?.audioUrl;
+ if(!audioUrl){
+ const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),8000);
+ try{const response=await fetch('https://api.dictionaryapi.dev/api/v2/entries/en/'+encodeURIComponent(word),{signal:controller.signal});const entries=await response.json();audioUrl=entries?.flatMap(e=>e.phonetics||[]).find(p=>/^https:\/\//.test(p.audio||''))?.audio||'';if(item&&audioUrl)item.audioUrl=audioUrl}finally{clearTimeout(timer)}
+ }
+ if(ticket!==pronunciationTicket)return;
+ if(!audioUrl)throw Error('no audio');
+ pronunciationAudio=new Audio(audioUrl);await pronunciationAudio.play();
+ if(ticket===pronunciationTicket)pronunciationNote('正在播放词典录音。词典录音的口音以来源为准。');
+ }catch(e){if(ticket===pronunciationTicket)pronunciationNote('自动朗读暂不可用，可点击点读或播放按钮重试；请检查设备音量与浏览器声音权限。')}
+}
+function speak(word){
+ stopPronunciation();const ticket=pronunciationTicket;
+ if(!window.speechSynthesis){pronunciationFallback(word,ticket);return}
+ speechTimer=setTimeout(()=>{
+ if(ticket!==pronunciationTicket)return;
+ try{
+ const utterance=new SpeechSynthesisUtterance(word);utterance.lang='en-GB';utterance.rate=.86;
+ const voices=window.speechSynthesis.getVoices(),voice=voices.find(v=>v.lang.toLowerCase()==='en-gb'&&v.localService)||voices.find(v=>v.lang.toLowerCase()==='en-gb');
+ if(voice)utterance.voice=voice;
+ utterance.onerror=event=>{if(!['canceled','interrupted'].includes(event.error)&&ticket===pronunciationTicket)pronunciationFallback(word,ticket)};
+ window.speechSynthesis.speak(utterance);if(window.speechSynthesis.paused)window.speechSynthesis.resume();
+ }catch(e){pronunciationFallback(word,ticket)}
+ },65);
+}
+
 function render(){let q=quiz[idx];if(!q){finish();return}chosen=null;locked=false;let label=q.label||'复习';$('main').innerHTML=`<section class="panel"><div class="flex"><span class="pill">${esc(label)}</span><b>${idx+1} / ${quiz.length}</b></div><div class="bar"><div style="width:${idx/quiz.length*100}%"></div></div><p class="question">${esc(q.q)}</p>${opts(q)}<div id="feedback"></div><div class="flex"><button class="primary" id="submit" onclick="submit()">提交答案</button><button class="primary hidden" id="next" onclick="idx++;render()">下一题 →</button></div></section>`}
 function submit(){if(locked)return;let q=quiz[idx],given;if(q.type==='spell'){given=($('spell').value||'').trim();if(!given)return alert('请先输入单词')}else if(q.type==='multi'){given=[...document.querySelectorAll('input[name=multi]:checked')].map(x=>Number(x.value));if(!given.length)return alert('请先选择答案')}else{if(chosen===null)return alert('请先选择答案');given=chosen}
 let ok=q.type==='spell'?given.toLowerCase()===q.a.toLowerCase():q.type==='multi'?JSON.stringify([...given].sort((a,b)=>a-b))===JSON.stringify([...q.a].sort((a,b)=>a-b)):q.type==='tf'?given===(q.a?0:1):given===q.a;
@@ -152,16 +193,19 @@ const defaultStats=stats;stats=function(){defaultStats();const active=screenshot
 const POS_CODES={noun:'n',verb:'v',adjective:'adj',adverb:'adv',preposition:'prep',pronoun:'pron',conjunction:'conj',interjection:'interj',determiner:'det'};
 function resetScreenshotBatch(){activePracticePage=0;screenshotBatch=null;document.querySelector('header h1').textContent='今日50词 · 三轮实战检测';home();shotStatus('已切换至原50词三轮测试。')}
 async function lookupBatchWord(w){
- const existing=WORDS.find(x=>x.w===w);if(existing&&(!existing.dictionary||existing.dictionaryVersion===2))return {...existing};
+ const existing=WORDS.find(x=>x.w===w);if(existing&&(!existing.dictionary||existing.dictionaryVersion===3))return {...existing};
  const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),15000);
  try{
  const response=await fetch('https://api.dictionaryapi.dev/api/v2/entries/en/'+encodeURIComponent(w),{signal:controller.signal});
  if(!response.ok)throw Error('词典暂不可用');
  const entries=await response.json(),entry=entries[0];
  const definitions=entry?.meanings?.flatMap(m=>(m.definitions||[]).map(d=>({...d,pos:m.partOfSpeech})))||[];
- const example=definitions.find(x=>x.definition&&x.example&&x.example.toLowerCase().split(/[^a-z'-]+/).includes(w));
- const d=example||definitions.find(x=>x.definition);if(!d)throw Error('没有可靠释义');
- return {w,zh:d.definition,syn:'',dictionary:true,dictionaryVersion:2,pos:POS_CODES[d.pos]||d.pos,definition:d.definition,example:example?.example||'',phonetic:entry.phonetic||entry.phonetics?.find(p=>p.text)?.text||''};
+ const commonPOS={bind:'verb',abandon:'verb',benefit:'noun',progress:'noun',contract:'noun',permit:'verb',record:'noun'};
+ const preferred=definitions.filter(x=>!commonPOS[w]||x.pos===commonPOS[w]);
+ const candidates=preferred.length?preferred:definitions;
+ const example=candidates.find(x=>x.definition&&x.example&&x.example.toLowerCase().split(/[^a-z'-]+/).includes(w));
+ const d=example||candidates.find(x=>x.definition);if(!d)throw Error('没有可靠释义');
+ return {w,zh:d.definition,syn:'',dictionary:true,dictionaryVersion:3,pos:POS_CODES[d.pos]||d.pos,definition:d.definition,example:example?.example||'',audioUrl:entry.phonetics?.find(p=>/^https:\/\//.test(p.audio||''))?.audio||'',phonetic:entry.phonetic||entry.phonetics?.find(p=>p.text)?.text||''};
  }finally{clearTimeout(timer)}
 }
 async function generateShotQuiz(){
@@ -327,7 +371,7 @@ finish=function(){
 };
 const renderBeforeAutoplay=render;
 render=function(){
- const before=quiz[idx];renderBeforeAutoplay();
+ stopPronunciation();const before=quiz[idx];renderBeforeAutoplay();
  const q=quiz[idx];if(!before||q!==before||!q||!document.getElementById('submit'))return;
  const field=$('spell');if(q.type==='spell'&&field)field.focus();
  // Do not speak a missing answer in an example-completion question.
