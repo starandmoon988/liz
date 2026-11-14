@@ -66,7 +66,7 @@ stats();home();</script>
 <p class="muted">上传单词截图 → 校对识别结果 → 开始测试。支持 PNG、JPG、WebP，多张截图可一起识别；请尽量裁掉无关标题。</p>
 <div class="flex"><label><button type="button" class="primary" onclick="document.getElementById('shot-files').click()">＋ 上传单词截图</button><input hidden id="shot-files" type="file" accept="image/png,image/jpeg,image/webp" multiple></label><button id="shot-read" type="button" disabled onclick="readShots()">识别截图文字</button></div>
 <div id="shot-previews"></div><p id="shot-status" class="muted import-status" role="status" aria-live="polite">截图仅在本机浏览器处理；首次识别需联网加载文字识别组件与英文模型。</p>
-<label for="shot-text"><b>校对英文单词</b></label><p class="muted">每行一个英文单词或短语，例如 abandon。只提取英文，忽略截图中文；核对拼写即可生成听写测试，无需填写中文。也可直接粘贴英文词表。</p>
+<label for="shot-text"><b>校对英文单词</b></label><p class="muted">每行一个英文单词或短语，例如 abandon。只提取英文，过滤“天、后、复习”等复习提示与数字；核对拼写即可生成听写测试，无需填写中文。也可直接粘贴英文词表。</p>
 <textarea id="shot-text" spellcheck="false" placeholder="abandon&#10;benefit"></textarea>
 <div class="flex" style="margin-top:12px"><button class="primary" onclick="generateShotQuiz()">生成今天的测试</button><button onclick="resumeShotQuiz()">继续上次截图词表</button><button onclick="home()">返回原50词测试</button></div>
 <p class="muted">所有英文词汇均可生成英式听写测试；匹配到内置词库的词还可练习中文识义。无需补充中文。词表与记录保存在当前浏览器。</p><div id="shot-quiz"></div>
@@ -76,11 +76,28 @@ const SHOT_KEY='liz_screenshot_words_v1';
 let shotFiles=[],shotURLs=[],shotWorker=null,shotLoading=null,shotWords=[],shotQueue=[],shotIndex=0,shotScore=0,shotLocked=false,shotMode='meaning';
 const shotEl=id=>document.getElementById(id);
 function shotStatus(s){shotEl('shot-status').textContent=s}
+// Review badges are UI metadata, not vocabulary.
+function screenshotEnglishText(data){
+ const lines=data.lines||[];
+ if(!lines.length)return data.text||'';
+ return lines.map(line=>{
+  const tokens=[];
+  for(const item of line.words||[]){
+   const text=String(item.text||'').trim();
+   if(/\d|[\u3400-\u9fff]/.test(text))break;
+   if(!/^[a-zA-Z]+(?:[-'’][a-zA-Z]+)*$/.test(text))continue;
+   if(text.length<2||Number(item.confidence)<65)continue;
+   tokens.push(text);
+  }
+  return tokens.join(' ');
+ }).filter(Boolean).join('\n');
+}
 function parseShotText(text){
  const out=[],seen=new Set();
  for(let line of text.split(/\r?\n/)){
- line=line.trim().replace(/^\s*[\d①-⑳.、)）•·-]+\s*/,'');
+ line=line.replace(/(?:\d+\s*)?(?:天\s*后\s*复\s*习|天|后|复\s*习).*$/,'').trim().replace(/^\s*[\d①-⑳.、)）•·-]+\s*/,'');
  line=line.replace(/\s+[\[\/][^\]\/]*[\]\/]/g,' ').replace(/\b(?:n|v|vt|vi|adj|adv|prep|conj|pron|phr)\./gi,' ').replace(/\s{2,}/g,' ');
+ line=line.replace(/\s+\d.*$/,'').trim();
  const m=line.match(/^([a-zA-Z]+(?:[-'’ ][a-zA-Z]+){0,4})(.*)$/);
  if(!m)continue;
  const w=m[1].trim().toLowerCase(),rest=m[2].replace(/^[\s|:：;,，–—-]+/,'').trim();
@@ -113,12 +130,13 @@ async function readShots(){
  try{
  shotStatus('正在加载识别组件与模型，首次使用可能需要较长时间…');await loadShotOCR();
  shotWorker=await Tesseract.createWorker('eng',1,{logger:m=>{if(m.status==='recognizing text')shotStatus('正在识别文字 '+Math.round((m.progress||0)*100)+'%')}});
+ await shotWorker.setParameters({tessedit_char_whitelist:"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-' ",preserve_interword_spaces:'1'});
  let all=[];
- for(let i=0;i<shotFiles.length;i++){shotStatus('正在处理第 '+(i+1)+' / '+shotFiles.length+' 张截图…');const result=await shotWorker.recognize(shotFiles[i]);all.push(result.data.text)}
+ for(let i=0;i<shotFiles.length;i++){shotStatus('正在处理第 '+(i+1)+' / '+shotFiles.length+' 张截图…');const result=await shotWorker.recognize(shotFiles[i]);all.push(screenshotEnglishText(result.data))}
  const raw=all.join('\n'),parsed=parseShotText(raw);
  const cleaned=parsed.map(x=>x.w).join('\n');
  shotEl('shot-text').value=[shotEl('shot-text').value.trim(),cleaned].filter(Boolean).join('\n');
- shotStatus('识别完成：提取 '+parsed.length+' 个候选词。已忽略中文，请核对英文拼写后生成测试。');
+ shotStatus('识别完成：提取 '+parsed.length+' 个候选词。已过滤“天、后、复习”等提示和低置信度碎片，请核对英文拼写后生成测试。');
  }catch(e){shotStatus('识别失败：'+e.message+' 你仍可在下方粘贴或输入词表。')}
  finally{if(shotWorker){await shotWorker.terminate().catch(()=>{});shotWorker=null}delete button.dataset.busy;button.disabled=!shotFiles.length;shotEl('shot-files').disabled=false}
 }
