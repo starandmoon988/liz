@@ -11,7 +11,7 @@ const IPA={"indefinite": "/ɪnˈdefɪnət/", "collective": "/kəˈlektɪv/", "gi
 const LISTEN_NOTES={"enquiry": "英式 /ɪnˈkwaɪəri/，重音在第二音节；enquiry 与 inquiry 拼写均可见。", "questionnaire": "重音在末尾 /ˈneə/；注意双写 n 和 -aire。", "queue": "读 /kjuː/，只有一个音节；ueue 不另发音。", "colleague": "重音在第一音节；-league 读 /liːɡ/。", "headquarters": "注意复数形式 -s；headquarters 通常以 -s 结尾。", "rural": "两个音节；英式 /ˈrʊərəl/，注意 r 与弱读元音。", "tenant": "重音在第一音节；不要与 tenet（信条）混淆。", "lecture": "-ture 读 /tʃə/；英式词尾 r 不单独卷舌。", "departure": "重音在第二音节 /ˈpɑː/；英式长元音 /ɑː/。", "gesture": "-ture 读 /tʃə/；重音在第一音节。"};
 const CONTEXT_ZH={};
 const CONTEXT_POINT={};
-function explainError(q,given,correct){if(q.type==='spell'){let a=q.a.toLowerCase(),b=String(given).toLowerCase();return `你的拼写是 “${given}”，正确拼写是 “${a}”。请对照每个字母，特别检查重音对应的音节及不发音字母。`;}if(q.type==='multi'){let selected=given||'（未选）';return `你选择了：${selected}。正确选项为：${correct}。A、B、D 都符合 incorporate X into Y 的用法；C 的 “incorporated to the bus” 搭配错误。`; }if(q.type==='tf')return `这道判断题的关键是词组含义，而不是句子表面是否通顺。请对比 “${q.w}” 的实际意义与题目中的解释。`;if(q.label?.includes('第一轮'))return `你选择的是“${given}”，但 “${q.w}” 在本题语境下表示“${q.rare?RARE_SENSES[q.w].meaning:WORDS.find(x=>x.w===q.w).zh}”。${q.rare?RARE_SENSES[q.w].note:'注意不要只凭词形猜测词义。'}`;return `你选择了“${given}”，但本句需要“${correct}”。${q.point||CONTEXT_POINT[q.w]||'请检查语义与固定搭配是否同时成立。'}`}
+function explainError(q,given,correct){if(q.type==='spell'){let a=q.a.toLowerCase(),b=String(given).toLowerCase();return `你的拼写是 “${given}”，正确拼写是 “${a}”。请对照每个字母，特别检查重音对应的音节及不发音字母。`;}if(q.type==='multi'){let selected=given||'（未选）';return `你选择了：${selected}。正确选项为：${correct}。${q.ex||'多选题需选全，且不能多选。'}`; }if(q.type==='tf')return `这道判断题的关键是词组含义，而不是句子表面是否通顺。请对比 “${q.w}” 的实际意义与题目中的解释。`;if(q.label?.includes('第一轮')||stage===4)return `你选择的是“${given}”，但 “${q.w}” 在本题语境下表示“${q.rare?RARE_SENSES[q.w].meaning:WORDS.find(x=>x.w===q.w).zh}”。${q.rare?RARE_SENSES[q.w].note:'注意不要只凭词形猜测词义。'}`;return `你选择了“${given}”，但本句需要“${correct}”。${q.point||CONTEXT_POINT[q.w]||'请检查语义与固定搭配是否同时成立。'}`}
 const EXTRA_IPA={advancement:'/ədˈvɑːnsmənt/',progress:'/ˈprəʊɡres/',benefit:'/ˈbenɪfɪt/',strength:'/streŋθ/',administrative:'/ədˈmɪnɪstrətɪv/',office:'/ˈɒfɪs/',hint:'/hɪnt/',indication:'/ˌɪndɪˈkeɪʃən/',provide:'/prəˈvaɪd/',give:'/ɡɪv/',fulfil:'/fʊlˈfɪl/',requirement:'/rɪˈkwaɪəmənt/',need:'/niːd/',improve:'/ɪmˈpruːv/',strengthen:'/ˈstreŋθən/',expand:'/ɪkˈspænd/',increase:'/ɪnˈkriːs/',geographic:'/ˌdʒiːəˈɡræfɪk/',news:'/njuːz/',title:'/ˈtaɪtəl/',awkward:'/ˈɔːkwəd/',characteristic:'/ˌkærəktəˈrɪstɪk/',include:'/ɪnˈkluːd/',contradictory:'/ˌkɒntrəˈdɪktəri/',explain:'/ɪkˈspleɪn/',translate:'/trænzˈleɪt/',integrate:'/ˈɪntɪɡreɪt/','well-informed':'/ˌwel ɪnˈfɔːmd/',disrupt:'/dɪsˈrʌpt/',tie:'/taɪ/',jump:'/dʒʌmp/',surge:'/sɜːdʒ/',scholarly:'/ˈskɒləli/',acquired:'/əˈkwaɪəd/',grassland:'/ˈɡrɑːslænd/',signify:'/ˈsɪɡnɪfaɪ/',intend:'/ɪnˈtend/',method:'/ˈmeθəd/',way:'/weɪ/',adjacent:'/əˈdʒeɪsənt/',discuss:'/dɪˈskʌs/',agreement:'/əˈɡriːmənt/',present:'/prɪˈzent/',cause:'/kɔːz/',part:'/pɑːt/',share:'/ʃeə/',favourable:'/ˈfeɪvərəbəl/',eligible:'/ˈelɪdʒəbəl/',competent:'/ˈkɒmpɪtənt/',line:'/laɪn/',argument:'/ˈɑːɡjəmənt/',destroy:'/dɪˈstrɔɪ/',damage:'/ˈdæmɪdʒ/',noise:'/nɔɪz/',reliable:'/rɪˈlaɪəbəl/',origin:'/ˈɒrɪdʒɪn/',keepsake:'/ˈkiːpseɪk/',wipe:'/waɪp/',doubt:'/daʊt/',impartial:'/ɪmˈpɑːʃəl/',expedition:'/ˌekspəˈdɪʃən/',roomy:'/ˈruːmi/',enticement:'/ɪnˈtaɪsmənt/',promote:'/prəˈməʊt/',entice:'/ɪnˈtaɪs/',unfavourable:'/ʌnˈfeɪvərəbəl/',trainer:'/ˈtreɪnə/',instruct:'/ɪnˈstrʌkt/',rules:'/ruːlz/',cipher:'/ˈsaɪfə/',drink:'/drɪŋk/',show:'/ʃəʊ/',illustrate:'/ˈɪləstreɪt/',logical:'/ˈlɒdʒɪkəl/',consistent:'/kənˈsɪstənt/',huge:'/hjuːdʒ/',vast:'/vɑːst/'};
 const IPA_ALL={...EXTRA_IPA,...IPA,'be eligible':'/bi ˈelɪdʒəbəl/','move forward':'/muːv ˈfɔːwəd/','news title':'/njuːz ˈtaɪtəl/','reach agreement':'/riːtʃ əˈɡriːmənt/'};
 function audioButton(word){return `<button type="button" class="audio" title="点读英式发音" onclick="speak(decodeURIComponent('${encodeURIComponent(word)}'))">🔊 点读</button>`}
@@ -27,7 +27,7 @@ function synonymDetails(x){return x.syn.split(';').map(v=>{let phrase=v.trim(),m
 function distractorDetails(q){if(!q.label?.includes('第一轮')||q.rare)return '';return '<p><b>选项对应的英文词汇：</b></p>'+q.opts.map((zh,i)=>{let w=WORDS.find(z=>z.zh===zh);return `<div class="rowline">${String.fromCharCode(65+i)}. ${esc(zh)} → ${w?phonetic(w.w)+' <b>('+esc(posLabel(WORD_POS[w.w]))+')</b>':'本项无唯一对应词'}</div>`}).join('')}
 function rareOptionNote(q){if(!q.rare)return '';return '<p class="muted">熟词僻义题的干扰项用于区分义项，不强行对应单一英文单词。</p>'}
 function obstacleDetails(q){let entries=OBSTACLES[q.w]||[];if(!entries.length)return '';return '<p><b>阅读障碍词释义（按本题语境）：</b></p>'+entries.map(([w,pos,zh])=>wordLine(w,pos,zh)).join('')}
-function answerDetails(q,ok,given,correct){let x=WORDS.find(z=>z.w===q.w),parts=[];if(q.label?.includes('第一轮')||stage===1){parts.push(`<p><b>考察词及词性：</b></p>${wordLine(q.w,WORD_POS[q.w],q.rare?RARE_SENSES[q.w].meaning:x.zh)}${q.rare?`<p><b>常见搭配：</b>${esc(RARE_SENSES[q.w].usage)}</p><p><b>English explanation:</b> ${esc(RARE_SENSES[q.w].note)}</p>`:''}<p><b>常见同义替换（音标、词性、中文意思）：</b></p>${synonymDetails(x)}${distractorDetails(q)}${rareOptionNote(q)}`)}else if(q.type==='spell'){parts.push(`<p><b>正确拼写、词性与中文意思：</b></p>${wordLine(q.w,WORD_POS[q.w],x.zh)}<p><b>英式发音注意：</b>${esc(LISTEN_NOTES[q.w]||'注意重音和弱读。')}</p><p><b>常见同义替换：</b></p>${synonymDetails(x)}</p>`)}else{parts.push(`<p><b>句子中文意思：</b>${esc(q.translation||CONTEXT_ZH[q.w]||'请结合上下文理解句义。')}</p><p><b>考察点：</b>${esc(q.point||CONTEXT_POINT[q.w]||'语境意义及搭配。')}</p><p><b>English explanation:</b> ${esc(q.ex)}</p><p><b>考察词及词性：</b></p>${wordLine(q.w,WORD_POS[q.w],x.zh)}<p><b>相关同义替换（须结合语境）：</b></p>${synonymDetails(x)}${obstacleDetails(q)}`);if(q.type==='single'&&q.opts)parts.push('<p><b>其他选项词汇及词性：</b></p>'+q.opts.filter(t=>t!==q.w&&WORDS.some(z=>z.w===t)).map(t=>wordLine(t,WORD_POS[t],WORDS.find(z=>z.w===t).zh)).join(''))}if(!ok)parts.push(`<p class="bad"><b>错误原因：</b>${esc(explainError(q,given,correct))}</p>`);return parts.join('')}
+function answerDetails(q,ok,given,correct){let x=WORDS.find(z=>z.w===q.w),parts=[];if(q.label?.includes('第一轮')||stage===1||stage===4){parts.push(`<p><b>考察词及词性：</b></p>${wordLine(q.w,WORD_POS[q.w],q.rare?RARE_SENSES[q.w].meaning:x.zh)}${q.rare?`<p><b>常见搭配：</b>${esc(RARE_SENSES[q.w].usage)}</p><p><b>English explanation:</b> ${esc(RARE_SENSES[q.w].note)}</p>`:''}<p><b>常见同义替换（音标、词性、中文意思）：</b></p>${synonymDetails(x)}${distractorDetails(q)}${rareOptionNote(q)}`)}else if(q.type==='spell'){parts.push(`<p><b>正确拼写、词性与中文意思：</b></p>${wordLine(q.w,WORD_POS[q.w],x.zh)}<p><b>英式发音注意：</b>${esc(LISTEN_NOTES[q.w]||'注意重音和弱读。')}</p><p><b>常见同义替换：</b></p>${synonymDetails(x)}</p>`)}else{parts.push(`<p><b>句子中文意思：</b>${esc(q.translation||CONTEXT_ZH[q.w]||'请结合上下文理解句义。')}</p><p><b>考察点：</b>${esc(q.point||CONTEXT_POINT[q.w]||'语境意义及搭配。')}</p><p><b>English explanation:</b> ${esc(q.ex)}</p><p><b>考察词及词性：</b></p>${wordLine(q.w,WORD_POS[q.w],x.zh)}<p><b>相关同义替换（须结合语境）：</b></p>${synonymDetails(x)}${obstacleDetails(q)}`);if(q.type==='single'&&q.opts)parts.push('<p><b>其他选项词汇及词性：</b></p>'+q.opts.filter(t=>t!==q.w&&WORDS.some(z=>z.w===t)).map(t=>wordLine(t,WORD_POS[t],WORDS.find(z=>z.w===t).zh)).join(''))}if(!ok)parts.push(`<p class="bad"><b>错误原因：</b>${esc(explainError(q,given,correct))}</p>`);return parts.join('')}
 
 
 const BASE_WORDS=WORDS.slice();
@@ -69,8 +69,8 @@ stats();home();</script>
 <div id="shot-previews"></div><p id="shot-status" class="muted import-status" role="status" aria-live="polite">截图仅在本机浏览器处理；首次识别需联网加载文字识别组件与英文模型。</p>
 <label for="shot-text"><b>校对英文单词</b></label><p class="muted">每行一个英文单词或短语，例如 abandon。截图按每行首个英文单词提取，忽略后续复习提示，不自动拼成短语；手动输入仍支持短语。核对拼写后直接进入新词三轮测试，无需填写中文。也可直接粘贴英文词表。</p>
 <textarea id="shot-text" spellcheck="false" placeholder="abandon&#10;benefit"></textarea>
-<div class="flex" style="margin-top:12px"><button class="primary" id="batch-generate" onclick="generateShotQuiz()">开始新词三轮测试</button><button onclick="resumeShotQuiz()">继续上次截图词表</button><button onclick="resetScreenshotBatch()">使用原50词</button></div>
-<p class="muted">截图词汇接入下方三轮测试与错题本。第二轮沿用雅思听力高频词练习，不另设截图听写。词库外的词查询在线英英词典，不编造释义与例句。</p><div id="shot-quiz"></div>
+<p><label for="practice-set"><b>选择练习套型：</b></label> <select id="practice-set" onchange="changePracticeSet(this.value)" style="font:inherit;padding:10px;border-radius:8px;max-width:100%"><option value="1">第1套 · 基础识义与直接语境</option><option value="2">第2套 · 反向提取与语境词义</option><option value="3">第3套 · 同义辨析与近义干扰</option><option value="4">第4套 · 搭配与整句辨别</option><option value="5">第5套 · 综合迁移与混合题型</option></select></p><p class="muted">标准每套40道词义＋10道高频听写＋10道语境。少于50个新词按实际数量；超过50词分批，所有新词完成后接旧词复习。</p><div class="flex" style="margin-top:12px"><button class="primary" id="batch-generate" onclick="generateShotQuiz()">开始新词三轮测试</button><button onclick="resumeShotQuiz()">继续上次截图词表</button><button onclick="resetScreenshotBatch()">使用原50词</button></div>
+<p class="muted">截图词汇接入下方三轮测试与错题本。第二轮沿用雅思听力高频词练习，不另设截图听写。词库外单词使用英英释义并附中文翻译；新词三轮后自动接旧词复习。回车提交，再按回车下一题；进入单词题目自动朗读。</p><div id="shot-quiz"></div>
 </section>
 <script>
 const SHOT_KEY='liz_screenshot_words_v1';
@@ -150,18 +150,18 @@ try{const stored=JSON.parse(localStorage.getItem(SHOT_KEY)||'null');for(const it
 const defaultHome=home,defaultBuild=build;
 const defaultStats=stats;stats=function(){defaultStats();const active=screenshotBatch||BASE_WORDS;shotEl('word-count').textContent=active.length;shotEl('done').textContent=active.filter(x=>db.attempts[x.w]).length};
 const POS_CODES={noun:'n',verb:'v',adjective:'adj',adverb:'adv',preposition:'prep',pronoun:'pron',conjunction:'conj',interjection:'interj',determiner:'det'};
-function resetScreenshotBatch(){screenshotBatch=null;document.querySelector('header h1').textContent='今日50词 · 三轮实战检测';home();shotStatus('已切换至原50词三轮测试。')}
+function resetScreenshotBatch(){activePracticePage=0;screenshotBatch=null;document.querySelector('header h1').textContent='今日50词 · 三轮实战检测';home();shotStatus('已切换至原50词三轮测试。')}
 async function lookupBatchWord(w){
- const existing=WORDS.find(x=>x.w===w);if(existing)return {...existing};
+ const existing=WORDS.find(x=>x.w===w);if(existing&&(!existing.dictionary||existing.dictionaryVersion===2))return {...existing};
  const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),15000);
  try{
  const response=await fetch('https://api.dictionaryapi.dev/api/v2/entries/en/'+encodeURIComponent(w),{signal:controller.signal});
  if(!response.ok)throw Error('词典暂不可用');
  const entries=await response.json(),entry=entries[0];
  const definitions=entry?.meanings?.flatMap(m=>(m.definitions||[]).map(d=>({...d,pos:m.partOfSpeech})))||[];
- const d=definitions.find(x=>x.definition);if(!d)throw Error('没有可靠释义');
- const example=definitions.find(x=>x.example&&x.example.toLowerCase().split(/[^a-z'-]+/).includes(w));
- return {w,zh:d.definition,syn:'',dictionary:true,pos:POS_CODES[d.pos]||d.pos,definition:d.definition,example:example?.example||'',phonetic:entry.phonetic||entry.phonetics?.find(p=>p.text)?.text||''};
+ const example=definitions.find(x=>x.definition&&x.example&&x.example.toLowerCase().split(/[^a-z'-]+/).includes(w));
+ const d=example||definitions.find(x=>x.definition);if(!d)throw Error('没有可靠释义');
+ return {w,zh:d.definition,syn:'',dictionary:true,dictionaryVersion:2,pos:POS_CODES[d.pos]||d.pos,definition:d.definition,example:example?.example||'',phonetic:entry.phonetic||entry.phonetics?.find(p=>p.text)?.text||''};
  }finally{clearTimeout(timer)}
 }
 async function generateShotQuiz(){
@@ -175,9 +175,11 @@ async function generateShotQuiz(){
  async function process(){while(cursor<words.length){const index=cursor++,w=words[index].w;try{records[index]=await lookupBatchWord(w)}catch(e){failed.push(w)}completed++;shotStatus('正在准备词汇 '+completed+' / '+words.length+'；仅查询截图中的单词。')}}
  await Promise.all(Array.from({length:Math.min(4,words.length)},()=>process()));
  if(failed.length){shotStatus('以下词暂未查到可靠释义：'+failed.join('、')+'。请核对拼写或稍后重试；本批尚未开始，不会用额外听写代替。');return}
+ activePracticePage=0;
+ oldReviewSnapshot=selectOldReview(records.map(x=>x.w));
  screenshotBatch=records;
- for(const item of records){if(!WORDS.some(x=>x.w===item.w))WORDS.push(item);if(item.dictionary){WORD_POS[item.w]=item.pos;if(item.phonetic)IPA_ALL[item.w]=item.phonetic}}
- try{localStorage.setItem(SHOT_KEY,JSON.stringify({words:records,date:today()}))}catch(e){}
+ for(const item of records){const wi=WORDS.findIndex(x=>x.w===item.w);if(wi<0)WORDS.push(item);else if(item.dictionary)WORDS[wi]=item;db.wordBank??={};db.wordBank[item.w]=item;if(item.dictionary){WORD_POS[item.w]=item.pos;if(item.phonetic)IPA_ALL[item.w]=item.phonetic}}
+ try{save();localStorage.setItem(SHOT_KEY,JSON.stringify({words:records,date:today()}))}catch(e){}
  shotEl('shot-quiz').innerHTML='';home();build(1);
  shotStatus('已接入新词三轮测试：'+records.length+'词。第二轮沿用雅思听力高频词，不再追加截图词表听写。');
  }finally{batchGenerating=false;shotEl('batch-generate').disabled=false}
@@ -217,15 +219,319 @@ answerDetails=function(q,ok,given,correct){const text=originalAnswerDetails(q,ok
 const originalSynonymDetails=synonymDetails;
 synonymDetails=function(item){return item.syn?originalSynonymDetails(item):'<p class="muted">暂无已核实的同义替换。</p>'};
 </script><script>document.getElementById("shot-anchor").append(document.getElementById("import-panel"));</script>
+
+<script>
+// Keep dictionary records available for old-word review and JSON backup.
+for(const item of Object.values(db.wordBank||{})){
+ if(item&&typeof item.w==='string'&&typeof item.zh==='string'&&!WORDS.some(x=>x.w===item.w)){
+  WORDS.push(item);WORD_POS[item.w]=item.pos||'';if(item.phonetic)IPA_ALL[item.w]=item.phonetic;
+ }
+}
+let oldReviewSnapshot=[],translationPending=new Map();
+function selectOldReview(newWords){
+ const exclude=new Set(newWords),known=w=>!exclude.has(w)&&WORDS.some(x=>x.w===w);
+ const due=Object.values(db.errors).filter(e=>known(e.word)&&((e.pending||0)>0||!e.next||e.next<=today())).sort((a,b)=>(b.misses||0)-(a.misses||0)).slice(0,15).map(e=>e.word);
+ const old=WORDS.filter(x=>known(x.w)&&db.attempts[x.w]&&!db.errors[x.w]).slice(0,5).map(x=>x.w);
+ return [...new Set([...due,...old])].slice(0,20);
+}
+async function translateDefinition(text){
+ const cacheKey='liz_zh_definition_v1_'+text;
+ try{const cached=localStorage.getItem(cacheKey);if(cached&&/[\u3400-\u9fff]/.test(cached))return cached}catch(e){}
+ if(translationPending.has(text))return translationPending.get(text);
+ const task=(async()=>{
+ const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),12000);
+ try{
+ const response=await fetch('https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=zh-CN&dt=t&q='+encodeURIComponent(text),{signal:controller.signal});
+ if(!response.ok)throw Error('中文翻译暂不可用');
+ const data=await response.json(),zh=Array.isArray(data[0])?data[0].map(s=>s?.[0]||'').join(''):'';
+ if(!/[\u3400-\u9fff]/.test(zh))throw Error('翻译响应无效');
+ try{localStorage.setItem(cacheKey,zh)}catch(e){}return zh;
+ }catch(e){
+ // Documented fallback has a 500-byte per-request limit.
+ if(new TextEncoder().encode(text).length>500)throw Error('中文翻译暂不可用');
+ const response=await fetch('https://api.mymemory.translated.net/get?langpair=en%7Czh-CN&q='+encodeURIComponent(text),{signal:controller.signal});
+ const data=await response.json(),zh=data.responseData?.translatedText||'';
+ if(!response.ok||Number(data.responseStatus)!==200||!/[\u3400-\u9fff]/.test(zh))throw Error('中文翻译暂不可用');
+ try{localStorage.setItem(cacheKey,zh)}catch(e){}return zh;
+ }finally{clearTimeout(timer)}
+ })();
+ translationPending.set(text,task);try{return await task}finally{translationPending.delete(text)}
+}
+const lookupWithoutTranslation=lookupBatchWord;
+lookupBatchWord=async function(w){
+ const item=await lookupWithoutTranslation(w);
+ if(item.dictionary&&!item.cnDefinition){
+ try{item.cnDefinition=await translateDefinition(item.definition);item.zh=item.cnDefinition}catch(e){item.translationUnavailable=true}
+ }
+ return item;
+};
+const baseBatchMeaning=batchMeaning;
+batchMeaning=function(item){
+ if(!item.dictionary)return baseBatchMeaning(item);
+ const examples=[
+ {definition:'A place where books are kept for people to read.',cnDefinition:'存放书籍以供人们阅读的地方。'},
+ {definition:'To move something from one place to another.',cnDefinition:'把某物从一个地方移到另一个地方。'},
+ {definition:'Having a very low temperature.',cnDefinition:'温度很低的。'}
+ ];
+ const candidates=[item,...(screenshotBatch||[]).filter(x=>x.dictionary&&x.w!==item.w),...examples];
+ const map=new Map();for(const x of candidates){if(!map.has(x.definition))map.set(x.definition,x.cnDefinition||'')}
+ const definitions=[item.definition,...[...map.keys()].filter(x=>x!==item.definition).slice(0,3)];
+ const options=definitions.map(def=>({en:def,zh:map.get(def)||''})).map(x=>({x,r:Math.random()})).sort((a,b)=>a.r-b.r).map(x=>x.x);
+ return {w:item.w,type:'single',q:'选择 “'+item.w+'” 的词义（英文释义附中文）',opts:options.map(x=>x.en),optionTranslations:options.map(x=>x.zh),a:options.findIndex(x=>x.en===item.definition),ex:item.definition,label:'第一轮 · 词义识别（英英＋中文）'};
+};
+const optionsWithoutChinese=opts;
+opts=function(q){
+ if(!q.optionTranslations)return optionsWithoutChinese(q);
+ return q.opts.map((text,i)=>'<button class="opt" id="opt'+i+'" onclick="choose('+i+')">'+String.fromCharCode(65+i)+'. '+esc(text)+'<br><span class="muted">'+esc(q.optionTranslations[i]||'中文暂未加载')+'</span></button>').join('')+
+ (q.optionTranslations.some(x=>!x)?'<p class="muted" id="translation-status">部分中文暂不可用。</p><button type="button" onclick="retryQuestionChinese()">重试中文翻译</button>':'');
+};
+async function retryQuestionChinese(){
+ const question=quiz[idx];if(!question?.optionTranslations)return;
+ const node=$('translation-status');if(node)node.textContent='正在加载中文…';
+ await Promise.all(question.opts.map(async(text,i)=>{
+ if(question.optionTranslations[i])return;
+ try{const zh=await translateDefinition(text);question.optionTranslations[i]=zh;const item=WORDS.find(x=>x.dictionary&&x.definition===text);if(item){item.cnDefinition=zh;item.zh=zh;db.wordBank??={};db.wordBank[item.w]=item;save()}}catch(e){}
+ }));
+ if(quiz[idx]!==question)return;
+ const buttons=document.querySelectorAll('#main .opt');
+ buttons.forEach((button,i)=>{const span=button.querySelector('.muted');if(span)span.textContent=question.optionTranslations[i]||'中文暂不可用，请稍后重试'});
+ if(node)node.textContent=question.optionTranslations.every(Boolean)?'中文翻译已加载。':'翻译服务暂不可用，请稍后重试。';
+}
+const detailsWithoutChinese=answerDetails;
+answerDetails=function(q,ok,given,correct){
+ const item=WORDS.find(x=>x.w===q.w);
+ return detailsWithoutChinese(q,ok,given,correct)+(item?.dictionary?'<p><b>英文释义：</b>'+esc(item.definition)+'</p><p><b>中文翻译：</b>'+esc(item.cnDefinition||'暂不可用，请重试中文翻译')+'</p>':'');
+};
+const buildBeforeOldReview=build;
+build=function(s){
+ if(s===4&&screenshotBatch){
+ stage=4;idx=0;results=[];
+ quiz=oldReviewSnapshot.filter(w=>WORDS.some(x=>x.w===w)).map(w=>({...makeMeaning(w,db.errors[w]?.pending?1:0),label:'旧词复习 · 词义识别'}));
+ if(!quiz.length){$('main').innerHTML='<section class="panel"><h2>本次新词学习完成</h2><p>暂无符合条件的旧词，不强行凑数。</p><button onclick="home()">返回首页</button></section>';return}
+ render();return;
+ }
+ return buildBeforeOldReview(s);
+};
+const finishBeforeOldReview=finish;
+finish=function(){
+ const correct=results.filter(Boolean).length,total=results.length;
+ if(screenshotBatch&&stage===3){
+ build(4);$('main').insertAdjacentHTML('afterbegin','<section class="panel"><p>新词三轮已完成；第三轮 '+correct+' / '+total+'。现在接旧词复习。</p></section>');return;
+ }
+ finishBeforeOldReview();
+ if(screenshotBatch&&(stage===1||stage===2)){
+ // Old-word review follows all three new-word rounds.
+ const buttons=document.querySelectorAll('#main button');
+ buttons.forEach(button=>{if((button.getAttribute('onclick')||'').includes('build(4)'))button.remove()});
+ }
+};
+const renderBeforeAutoplay=render;
+render=function(){
+ const before=quiz[idx];renderBeforeAutoplay();
+ const q=quiz[idx];if(!before||q!==before||!q||!document.getElementById('submit'))return;
+ const field=$('spell');if(q.type==='spell'&&field)field.focus();
+ // Do not speak a missing answer in an example-completion question.
+ if(!q.deferPronunciation&&(q.type==='spell'||stage===1||stage===4||!q.q.includes('______')))speak(q.w);
+};
+</script>
+
+<script>
+let practiceSet=1,activePracticePage=0;
+const PRACTICE_NAMES=['基础识义与直接语境','反向提取与语境词义','同义辨析与近义干扰','搭配与整句辨别','综合迁移与混合题型'];
+// Teaching examples; these are authored exercises, not dictionary quotations.
+const TEACHING_CONTEXT=[
+['indefinite','The hearing was postponed for an indefinite period; no new date was set.','听证会被无限期推迟，尚未确定新日期。','无限期的'],
+['collective','No single village could solve the problem; it required collective action.','没有一个村庄能独自解决问题，这需要集体行动。','集体的；共同的'],
+['giant','The tiny fishing boats looked very small beside the giant cargo ship.','在巨大的货船旁，小渔船显得格外小。','巨大的'],
+['enquiry','For further information, please send an enquiry to our customer service team.','如需更多信息，请向客服团队提出询问。','询问'],
+['index','The consumer price index is a measure used to track changes in prices.','消费者价格指数是用于追踪价格变化的指标。','指数；指标'],
+['departure','Passengers should arrive thirty minutes before the train’s departure.','乘客应在火车出发前30分钟到达。','出发'],
+['heal','Keep the wound clean so that it can heal properly.','保持伤口清洁，以便它正常愈合。','愈合'],
+['issue','The publisher will issue a revised edition of the textbook next month.','出版社下月将发行这本教材的修订版。','发行；发布'],
+['fee','The museum charges an admission fee of ten pounds per visitor.','博物馆向每位游客收取10英镑门票费。','费用'],
+['enrich','Meeting people from different backgrounds can enrich your understanding of society.','与不同背景的人交往能够丰富你对社会的理解。','丰富'],
+['collapse','Engineers evacuated the building because it was about to collapse.','工程师疏散了楼内人员，因为建筑即将倒塌。','倒塌'],
+['underestimate','The repair took twice as long as expected; we must not underestimate the time needed.','维修耗时是预计的两倍，我们不能低估所需时间。','低估'],
+['undergo','The patient will undergo surgery tomorrow and then spend a week recovering.','患者明天将接受手术，然后休养一周。','接受；经受'],
+['advocate','The campaigners advocate stricter controls on industrial pollution.','活动人士提倡更严格地控制工业污染。','提倡'],
+['bias','The interviewer used identical questions to reduce personal bias in the selection process.','面试官使用相同的问题，以减少选拔过程中的个人偏见。','偏见'],
+['colleague','My colleague works in the same department as I do.','我的同事和我在同一个部门工作。','同事'],
+['agency','A government agency is responsible for enforcing the environmental regulations.','一个政府机构负责执行环境法规。','机构'],
+['deny','Although the evidence was clear, he continued to deny any involvement.','尽管证据明确，他仍继续否认参与其中。','否认'],
+['affect','A shortage of clean water can affect the health of an entire community.','清洁用水短缺会影响整个社区的健康。','影响'],
+['underground','The pipes are buried underground, well below the surface of the road.','这些管道埋在地下，远低于路面。','在地下'],
+['tenant','The tenant pays rent to the owner of the flat every month.','租户每月向公寓业主支付租金。','租户'],
+['specialize','After studying general medicine, she decided to specialize in heart disease.','学习普通医学后，她决定专攻心脏病。','专攻'],
+['rural','The project supplies clean water to rural communities far from major cities.','该项目向远离大城市的农村社区供应清洁用水。','农村的'],
+['tender','Several companies submitted a tender for the new bridge construction contract.','几家公司为新桥建设合同提交了投标文件。','投标文件'],
+['rumour','There is a rumour about the closure, but the company has not confirmed it.','有关于停业的传闻，但公司尚未证实。','传闻'],
+['queue','Please join the queue and wait until it is your turn to buy a ticket.','请排队，等轮到你时再买票。','队列'],
+['uncover','The investigation aims to uncover the truth about the missing funds.','调查旨在揭露资金失踪的真相。','揭露'],
+['spare','Could you spare a few minutes to help me carry these boxes?','你能抽出几分钟帮我搬这些箱子吗？','抽出'],
+['tendency','These plants have a tendency to grow towards the light.','这些植物有朝着光线方向生长的倾向。','倾向'],
+['questionnaire','Participants completed a questionnaire containing twenty questions about their travel habits.','参与者填写了一份包含20个出行习惯问题的问卷。','调查问卷'],
+['postpone','Because of the storm, we had to postpone the outdoor event until next week.','由于暴风雨，我们不得不把户外活动推迟到下周。','推迟'],
+['nerve','She finally found the nerve to speak in front of a large audience.','她终于鼓起勇气在众多观众面前讲话。','勇气'],
+['poster','They put up a large poster on the wall to advertise the concert.','他们在墙上张贴了一张大海报来宣传音乐会。','海报'],
+['possession','The stolen painting was found in his possession.','被盗画作被发现在他手中。','持有；拥有'],
+['mechanism','Scientists are studying the biological mechanism that allows these cells to repair themselves.','科学家正在研究使这些细胞能够自我修复的生物机制。','机制'],
+['measure','Use a ruler to measure the length of the desk.','用尺子测量桌子的长度。','测量'],
+['potential','With the right training, she has the potential to become an excellent researcher.','经过适当训练，她有潜力成为优秀研究人员。','潜力'],
+['possibility','We cannot rule out the possibility that the flight will be cancelled.','我们不能排除航班取消的可能性。','可能性'],
+['quality','The factory tests every product to maintain a high standard of quality.','工厂检测每件产品，以维持高质量标准。','质量'],
+['media','Newspapers, television and other media reported the election results.','报纸、电视和其他媒体报道了选举结果。','媒体'],
+['gesture','He raised his hand in a gesture of greeting.','他举手作出问候的手势。','手势'],
+['federal','In this country, power is shared between state governments and the federal government.','在这个国家，权力由州政府与联邦政府分享。','联邦的'],
+['increasingly','As prices rise, families are finding it increasingly difficult to save money.','随着物价上涨，家庭发现存钱越来越困难。','越来越'],
+['enlightened','An enlightened approach to education welcomes new ideas instead of rejecting all change.','开明的教育方式欢迎新思想，而非拒绝一切变化。','开明的'],
+['headquarters','The company’s headquarters is the main office from which its business is managed.','公司的总部是管理业务的主要办公机构。','总部'],
+['isolate','To prevent the infection from spreading, doctors must isolate affected patients.','为防止感染扩散，医生必须隔离受影响的患者。','隔离'],
+['isolated','The village is so isolated that the nearest town is a day’s walk away.','这个村庄非常偏远，步行到最近的城镇需要一天。','偏远的'],
+['incredible','It was an incredible achievement to finish the race after such a serious injury.','受了如此严重的伤后还能完成比赛，是难以置信的成就。','难以置信的'],
+['jungle','They cut a path through the dense tropical jungle.','他们在茂密的热带丛林中开出了一条路。','丛林'],
+['lecture','Students attended a lecture on climate science given by a visiting professor.','学生们听了一场由来访教授讲授的气候科学讲座。','讲座']
+];
+const TEACHING_MAP=new Map(TEACHING_CONTEXT.map(([w,sentence,translation,sense])=>[w,{sentence,translation,sense}]));
+function shuffled(values){return values.map(x=>({x,r:Math.random()})).sort((a,b)=>a.r-b.r).map(x=>x.x)}
+function practicePage(){
+ const bank=screenshotBatch||BASE_WORDS,page=bank.slice(activePracticePage*50,activePracticePage*50+50);
+ const offset=((practiceSet-1)*10)%Math.max(1,page.length);
+ return page.slice(offset).concat(page.slice(0,offset));
+}
+function meaningItems(){const page=practicePage();return page.length>40?page.slice(0,40):page}
+function contextItems(){
+ const page=practicePage();
+ if(page.length<=10)return page;
+ const remaining=page.slice(40);return remaining.concat(page.filter(x=>!remaining.includes(x))).slice(0,10);
+}
+function chooseAlternativeWords(item,hard=false){
+ const all=WORDS.filter(x=>x.w!==item.w),positions=String(WORD_POS[item.w]||item.pos||'').split(',');
+ const same=all.filter(x=>String(WORD_POS[x.w]||x.pos||'').split(',').some(p=>positions.includes(p)));
+ return hard&&same.length>=5?same:all;
+}
+function renewedOptions(answer,pool,key){
+ const candidates=[...new Set(pool)].filter(x=>x&&x!==answer);
+ db.optionMemory??={};const previous=db.optionMemory[key]||[];
+ const fresh=shuffled(candidates.filter(x=>!previous.includes(x)));
+ const prior=shuffled(candidates.filter(x=>previous.includes(x)));
+ const distractors=fresh.concat(prior).slice(0,3);
+ db.optionMemory[key]=distractors;
+ return shuffled([answer,...distractors]);
+}
+function makeSetMeaning(item,index){
+ const type=practiceSet===5?[1,2,3,4][index%4]:practiceSet;
+ const hard=practiceSet>=3,others=chooseAlternativeWords(item,hard);
+ if(type===1)return batchMeaning(item);
+ if(type===2){
+ const meaning=item.cnDefinition||item.zh;
+ const options=renewedOptions(item.w,others.map(x=>x.w),'reverse:'+item.w);
+ return {w:item.w,type:'single',q:'选择符合此词义的英文单词：'+meaning,opts:options,a:options.indexOf(item.w),ex:item.definition||item.zh,deferPronunciation:true,label:'第一轮 · 中译英词义识别（提交后朗读）'};
+ }
+ if(type===3){
+ const cue=item.definition||item.syn?.split(';')[0];
+ if(cue){
+ const options=renewedOptions(item.w,others.map(x=>x.w),'synonym:'+item.w);
+ return {w:item.w,type:'single',q:(item.definition?'选择符合此英文释义的词：':'选择在所列义项上最接近的词：')+cue,opts:options,a:options.indexOf(item.w),ex:item.cnDefinition||item.zh,deferPronunciation:true,label:'第一轮 · 英文释义／同义辨析（提交后朗读）'};
+ }
+ return batchMeaning(item);
+ }
+ const rare=RARE_SENSES[item.w];
+ if(rare){
+ const options=renewedOptions(rare.meaning,others.map(x=>x.cnDefinition||x.zh),'rare:'+item.w);
+ return {w:item.w,type:'single',q:rare.stem,opts:options,a:options.indexOf(rare.meaning),ex:rare.note,label:'第一轮 · 熟词僻义',rare:true};
+ }
+ return batchMeaning(item);
+}
+function exerciseContext(item,index){
+ const curated=TEACHING_MAP.get(item.w);
+ const source=curated?{...curated,source:'教学编写例句'}:item.example?{sentence:item.example,translation:item.cnExample||'词典原例句，中文暂不可用。',sense:item.cnDefinition||item.zh,source:'英英词典原例句'}:null;
+ if(!source)return {...batchUsage(item),label:'第三轮 · 词性辨析（暂无例句）'};
+ const sentence=source.sentence,meaning=source.sense;
+ const others=chooseAlternativeWords(item,practiceSet>=3);
+ const otherMeanings=others.map(x=>x.cnDefinition||x.zh);
+ const shape=practiceSet===5?(index<2?'tf':index===2?'multi':index%2?'sense':'gap'):practiceSet===2?'sense':practiceSet===4?'sentence':'gap';
+ if(shape==='tf'){
+ const yes=Math.random()>.5,wrong=renewedOptions(meaning,otherMeanings,'tf:'+item.w).find(x=>x!==meaning)||'未说明的其他意思';
+ return {w:item.w,type:'tf',q:sentence+'\n判断：本句中的 “'+item.w+'” 表示“'+(yes?meaning:wrong)+'”。',a:yes,ex:'本句对应的义项为：'+meaning+'。',translation:source.translation,point:source.source+'；根据整句确定义项。',label:'第三轮 · 语境判断'};
+ }
+ if(shape==='multi'){
+ const wrong=renewedOptions(meaning,otherMeanings,'multi:'+item.w).filter(x=>x!==meaning).slice(0,2);
+ const statements=shuffled([{text:'本句中 '+item.w+' 表示“'+meaning+'”。',correct:true},{text:'整句可译为：'+source.translation,correct:true},...wrong.map(x=>({text:'本句中 '+item.w+' 表示“'+x+'”。',correct:false}))]);
+ return {w:item.w,type:'multi',q:sentence+'\n选择所有符合本句语义的陈述。',opts:statements.map(x=>x.text),a:statements.map((x,i)=>x.correct?i:-1).filter(i=>i>=0),ex:'按本句语境核对词义和整句意思，不按选项位置作答。',translation:source.translation,point:source.source,label:'第三轮 · 语境多选'};
+ }
+ if(shape==='sense'){
+ const options=renewedOptions(meaning,otherMeanings,'sense:'+item.w);
+ return {w:item.w,type:'single',q:sentence+'\n“'+item.w+'” 在本句中表示？',opts:options,a:options.indexOf(meaning),ex:'本句中 '+item.w+' 表示“'+meaning+'”。',translation:source.translation,point:source.source+'；通过语境判断义项。',label:'第三轮 · 语境词义'};
+ }
+ const escaped=item.w.replace(/[^a-zA-Z -]/g,''),regex=new RegExp('\\b'+escaped+'\\b','gi');
+ const gap=sentence.replace(regex,'______');
+ if(gap===sentence)return batchUsage(item);
+ const words=renewedOptions(item.w,others.map(x=>x.w),'context:'+item.w);
+ if(shape==='sentence'){
+ const options=words.map(w=>sentence.replace(new RegExp('\\b'+escaped+'\\b','gi'),w));
+ return {w:item.w,type:'single',q:'选择与下列中文意思一致的完整句子：\n'+source.translation,opts:options,a:words.indexOf(item.w),ex:sentence,translation:source.translation,point:source.source+'；同时核对搭配和整句语义。',label:'第三轮 · 搭配与整句辨别'};
+ }
+ return {w:item.w,type:'single',q:gap,opts:words,a:words.indexOf(item.w),ex:sentence,translation:source.translation,point:source.source+'；整组干扰项重新组合。',label:'第三轮 · '+(practiceSet>=3?'同词性语境辨析':'句子填空')};
+}
+const buildWithOldReview=build;
+build=function(s){
+ if(s===4)return buildWithOldReview(s);
+ stage=s;idx=0;results=[];
+ if(s===1)quiz=meaningItems().map(makeSetMeaning);
+ if(s===2)quiz=shuffled(LISTEN).map(w=>({w,type:'spell',q:'Listen and write the word.（Enter 提交，再按 Enter 下一题）',a:w,ex:'正确拼写：'+w,label:'第二轮 · 雅思听力高频词'}));
+ if(s===3)quiz=contextItems().map(exerciseContext);
+ if(!quiz.length){home();return}
+ render();
+};
+const homeBeforeSets=home;
+home=function(){
+ homeBeforeSets();
+ const main=$('main');
+ if(!screenshotBatch){
+ // Replace the legacy launch panel while preserving review/backup controls.
+ const first=main.querySelector('section.panel');if(first)first.remove();
+ }
+ const page=practicePage(),m=meaningItems().length,n=contextItems().length,total=(screenshotBatch||BASE_WORDS).length;
+ const intro='<section class="panel"><span class="pill">第'+practiceSet+'套 / 5 · '+PRACTICE_NAMES[practiceSet-1]+'</span><h2>新词三轮测试</h2><p class="muted">第'+(activePracticePage+1)+'批，共'+Math.ceil(total/50)+'批；本批'+page.length+'词。'+m+'道词义识别 → 10道听力高频词 → '+n+'道语境。各批新词完成后再接旧词复习。</p><div class="flex"><button class="primary" onclick="build(1)">① 词义识别 · '+m+'题</button><button onclick="build(2)">② 高频听写 · 10题</button><button onclick="build(3)">③ 语境用法 · '+n+'题</button></div><p class="muted">升级套型时重组整组干扰项；同词性词汇优先，答案位置同步随机。</p></section>';
+ if(screenshotBatch){const first=main.querySelector('section.panel');if(first)first.remove()}
+ main.insertAdjacentHTML('afterbegin',intro);
+};
+function changePracticeSet(value){
+ practiceSet=Math.max(1,Math.min(5,Number(value)||1));activePracticePage=0;
+ home();shotStatus('已切换至第'+practiceSet+'套：'+PRACTICE_NAMES[practiceSet-1]+'。学习记录保留；从第一轮开始。');
+}
+const finishWithReview=finish;
+finish=function(){
+ if(stage===3&&screenshotBatch&&((activePracticePage+1)*50<screenshotBatch.length)){
+ activePracticePage++;home();build(1);shotStatus('上一批新词已完成，现在进入第'+(activePracticePage+1)+'批；全部新词完成后再复习旧词。');return;
+ }
+ finishWithReview();
+};
+const detailsBeforeSource=answerDetails;
+answerDetails=function(q,ok,given,correct){
+ return detailsBeforeSource(q,ok,given,correct)+(q.point?.includes('教学编写')?'<p class="muted">本题例句为教学编写，用于练习词义、搭配及语境辨别。</p>':'');
+};
+</script>
+
+<script>
+const submitBeforeDeferredSpeech=submit;
+submit=function(){
+ const wasLocked=locked,question=quiz[idx];submitBeforeDeferredSpeech();
+ if(!wasLocked&&locked&&question?.deferPronunciation)speak(question.w);
+};
+</script>
 <script>
 function handleQuizEnter(event){
  if(event.key!=='Enter'||event.isComposing||event.keyCode===229||event.repeat)return;
  const target=event.target;
- if(!target||target.tagName==='TEXTAREA'||target.tagName==='BUTTON'||target.type==='file')return;
- if(target.id==='spell'||(target.closest&&target.closest('#main')&&document.getElementById('submit'))){
-  event.preventDefault();
-  if(!locked)submit();
- }
+ if(!target||target.tagName==='TEXTAREA'||target.type==='file')return;
+ const submitButton=$('submit'),nextButton=$('next');
+ const insideQuiz=target.id==='spell'||(target.closest&&target.closest('#main'))||target===document.body;
+ if(!insideQuiz||!submitButton)return;
+ event.preventDefault();
+ if(!locked){submit();return}
+ if(nextButton&&!nextButton.classList.contains('hidden')){idx++;render()}
 }
 document.addEventListener('keydown',handleQuizEnter);
+home();
 </script></body></html>
