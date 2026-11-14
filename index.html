@@ -38,7 +38,7 @@ const repairedTF=repairHistoricalTF();
 let stage=0,quiz=[],idx=0,chosen=null,locked=false,results=[];
 function save(){try{localStorage.setItem(KEY,JSON.stringify(db))}catch(e){alert('本地存储不可用，请导出备份。')}stats()}
 function stats(){$('done').textContent=WORDS.filter(x=>db.attempts[x.w]).length;$('wrong').textContent=Object.keys(db.errors).length}
-function opts(q){if(q.type==='spell')return `<button onclick="speak('${q.w}')">▶ 播放英式发音</button><p class="muted">可反复点读；每次点击会立即中断前一次发音并重新播放（语音为设备合成发音）</p><input type="text" id="spell" autocomplete="off" spellcheck="false" placeholder="Type the word you hear">`;if(q.type==='multi')return q.opts.map((x,i)=>`<label class="multi"><input type="checkbox" name="multi" value="${i}"> ${esc(x)}</label>`).join('');let o=q.type==='tf'?['True','False']:q.opts;return o.map((x,i)=>`<button class="opt" id="opt${i}" onclick="choose(${i})">${String.fromCharCode(65+i)}. ${esc(x)}</button>`).join('')}
+function opts(q){if(q.type==='spell')return `<button onclick="speak('${q.w}')">▶ 播放英式发音</button><p class="muted">可反复点读；每次点击会立即中断前一次发音并重新播放（语音为设备合成发音）</p><input type="text" id="spell" autocomplete="off" spellcheck="false" placeholder="Type the word you hear · Enter 提交">`;if(q.type==='multi')return q.opts.map((x,i)=>`<label class="multi"><input type="checkbox" name="multi" value="${i}"> ${esc(x)}</label>`).join('');let o=q.type==='tf'?['True','False']:q.opts;return o.map((x,i)=>`<button class="opt" id="opt${i}" onclick="choose(${i})">${String.fromCharCode(65+i)}. ${esc(x)}</button>`).join('')}
 function choices(w){let x=WORDS.find(v=>v.w===w),others=WORDS.filter(v=>v.w!==w&&v.zh!==x.zh);let salt=WORDS.indexOf(x);let distract=[others[(salt+7)%others.length],others[(salt+19)%others.length],others[(salt+31)%others.length]].map(z=>z.zh);let a=[x.zh,...distract];return {opts:a.sort((a,b)=>((a.length*7+salt)%11)-((b.length*7+salt)%11)),answer:x.zh}}
 function makeMeaning(w,variant=0){let x=WORDS.find(v=>v.w===w),o=choices(w);if(variant){let syn=x.syn.split(';')[0];return {w,type:'single',q:`Which word is closest in meaning to “${syn}”?`,opts:[w,...WORDS.filter(v=>v.w!==w).slice(0,3).map(v=>v.w)],a:0,ex:`“${w}” can mean ${x.zh}.`,label:'变式复测'}}let rare=RARE_SENSES[w];if(rare){let other=WORDS.filter(v=>v.w!==w&&!v.zh.includes(rare.meaning)).slice(0,3).map(v=>v.zh);let opts=[rare.meaning,...other];let shift=(WORDS.findIndex(v=>v.w===w)%4);opts=[...opts.slice(shift),...opts.slice(0,shift)];return {w,type:'single',q:rare.stem,opts,a:opts.indexOf(rare.meaning),ex:rare.note,label:'第一轮 · 中文识义 · 熟词僻义',rare:true}}return {w,type:'single',q:`${w} 的中文意思是？`,opts:o.opts,a:o.opts.indexOf(o.answer),ex:`“${w}” means ${x.zh}.`,label:'第一轮 · 中文识义'}}
 function build(s){stage=s;idx=0;results=[];if(s===1)quiz=WORDS.filter(x=>!LISTEN.includes(x.w)).map(x=>makeMeaning(x.w));if(s===2)quiz=LISTEN.map(w=>({w,type:'spell',q:'Listen and write the word.',a:w,ex:`The correct spelling is “${w}”.`,label:'第二轮 · 听力拼写'}));if(s===3)quiz=CONTEXT.map(x=>({...x,label:'第三轮 · 语境与用法'}));if(s===4){let due=Object.values(db.errors).filter(e=>(e.pending||0)>0||!e.next||e.next<=today()).sort((a,b)=>(b.misses||0)-(a.misses||0)).slice(0,15).map(e=>e.word);let other=WORDS.filter(x=>db.attempts[x.w]&&!db.errors[x.w]&&x.syn).slice(0,5).map(x=>x.w);let chosenWords=[...new Set([...due,...other])].slice(0,20);if(!chosenWords.length){$('main').innerHTML='<section class="panel"><h2>暂无旧词任务</h2><p>先完成新词测试。旧词不强行凑满20个。</p></section>';return}quiz=chosenWords.map(w=>{let e=db.errors[w];return e?.pending?makeMeaning(w,1):makeMeaning(w,0)})}render()}
@@ -166,7 +166,7 @@ function renderShotQuestion(){
  const box=shotEl('shot-quiz'),q=shotQueue[shotIndex];shotLocked=false;
  if(!q){box.innerHTML='<div class="feedback"><h3>本轮完成：'+shotScore+' / '+shotQueue.length+'</h3><p>答错词已记录在这份截图词表中。</p><button onclick="startShotRound(\'spell\')">开始听写轮</button> <button onclick="startShotRound(\'meaning\')">内置词库识义练习</button> <button onclick="retryShotMistakes()">只测错词</button></div>';return}
  box.innerHTML='<div class="feedback"><span class="pill">'+(shotMode==='spell'?'英式听写':'中文识义')+' '+(shotIndex+1)+' / '+shotQueue.length+'</span><h3>'+(shotMode==='spell'?'听音，写出单词':esc(q.w))+'</h3>'+
- (shotMode==='spell'?'<button onclick="speak(shotQueue[shotIndex].w)">🔊 播放英式发音</button><p class="muted">设备合成语音，可重复播放。</p><input aria-label="输入听到的单词" type="text" id="shot-answer" autocomplete="off" spellcheck="false">':q.options.length>1?q.options.map((v,i)=>'<button class="opt" onclick="checkShotAnswer('+i+')">'+esc(v)+'</button>').join(''):'<p>释义选项不足，请输入中文释义：</p><input type="text" id="shot-answer"><button onclick="checkShotAnswer()">提交</button>')+
+ (shotMode==='spell'?'<button onclick="speak(shotQueue[shotIndex].w)">🔊 播放英式发音</button><p class="muted">设备合成语音，可重复播放。</p><input aria-label="输入听到的单词，按回车提交" placeholder="输入单词后按 Enter 提交" type="text" id="shot-answer" autocomplete="off" spellcheck="false">':q.options.length>1?q.options.map((v,i)=>'<button class="opt" onclick="checkShotAnswer('+i+')">'+esc(v)+'</button>').join(''):'<p>释义选项不足，请输入中文释义：</p><input type="text" id="shot-answer"><button onclick="checkShotAnswer()">提交</button>')+
  (shotMode==='spell'?'<button onclick="checkShotAnswer()">提交拼写</button>':'')+'<div id="shot-feedback" aria-live="polite"></div></div>';
 }
 function checkShotAnswer(option){
@@ -180,4 +180,21 @@ function checkShotAnswer(option){
 function retryShotMistakes(){
  try{const saved=JSON.parse(localStorage.getItem(SHOT_KEY));const latest=new Map();for(const r of saved.results)latest.set(r.w,r.ok);const wrong=shotWords.filter(x=>latest.get(x.w)===false);if(!wrong.length){shotStatus('目前没有待复测错词。');return}shotIndex=0;shotScore=0;shotMode='spell';shotQueue=shotShuffle(wrong);renderShotQuestion()}catch(e){shotStatus('暂无错题记录。')}
 }
-</script><script>document.getElementById("shot-anchor").append(document.getElementById("import-panel"));</script></body></html>
+</script><script>document.getElementById("shot-anchor").append(document.getElementById("import-panel"));</script>
+<script>
+function handleQuizEnter(event){
+ if(event.key!=='Enter'||event.isComposing||event.keyCode===229||event.repeat)return;
+ const target=event.target;
+ if(!target||target.tagName==='TEXTAREA'||target.tagName==='BUTTON'||target.type==='file')return;
+ if(target.id==='shot-answer'){
+  event.preventDefault();
+  if(!shotLocked)checkShotAnswer();
+  return;
+ }
+ if(target.id==='spell'||(target.closest&&target.closest('#main')&&document.getElementById('submit'))){
+  event.preventDefault();
+  if(!locked)submit();
+ }
+}
+document.addEventListener('keydown',handleQuizEnter);
+</script></body></html>
