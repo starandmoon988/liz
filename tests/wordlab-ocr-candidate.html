@@ -148,7 +148,7 @@ function screenshotWordCandidates(data){
   // Match the complete OCR token, not a leading fragment of a longer token.
   if(!/^[a-z]+(?:[-'][a-z]+)*$/.test(w)||w.length<2||w.length>45)continue;
   const confidence=Number(first.confidence);
-  if(!box||![box.x0,box.x1,box.y0,box.y1].every(Number.isFinite)||box.x1<=box.x0||box.y1<=box.y0||!Number.isFinite(confidence)||confidence<88){uncertain.push(w);continue}
+  if(!box||![box.x0,box.x1,box.y0,box.y1].every(Number.isFinite)||box.x1<=box.x0||box.y1<=box.y0||!Number.isFinite(confidence)||confidence<55){uncertain.push(w);continue}
   const height=box.y1-box.y0,next=items[firstIndex+1];
   // A nearly touching English token can be a split headword. Never glue it,
   // and never automatically import only the first fragment.
@@ -162,9 +162,9 @@ function screenshotWordCandidates(data){
  groups.sort((a,b)=>b.length-a.length||shotMedian(a.map(x=>x.box.x0))-shotMedian(b.map(x=>x.box.x0)));
  const dominant=groups[0]||[],typical=shotMedian(dominant.map(r=>r.height));
  if(dominant.length<3)return {accepted:[],uncertain:[...uncertain,...rows.map(r=>r.word)]};
- const accepted=dominant.filter(r=>r.height>=typical*.7&&r.height<=typical*1.45);
+ const body=dominant.filter(r=>r.height>=typical*.7&&r.height<=typical*1.45),accepted=body.filter(r=>r.confidence>=88);
  const kept=new Set(accepted);
- return {accepted,uncertain:[...uncertain,...rows.filter(r=>!kept.has(r)).map(r=>r.word)]};
+ return {accepted,body,uncertain:[...uncertain,...rows.filter(r=>!kept.has(r)).map(r=>r.word)]};
 }
 function screenshotEnglishText(data){
  const result=screenshotWordCandidates(data);shotUncertainWords.push(...result.uncertain);
@@ -178,7 +178,15 @@ function verifiedScreenshotWords(original,processed,ratioX=1,ratioY=1){
   if(matching)accepted.push(row.word);else uncertain.push(row.word);
  }
  for(const row of b.accepted)if(!accepted.includes(row.word))uncertain.push(row.word);
- return {words:[...new Set(accepted)],uncertain:[...new Set(uncertain)].filter(w=>!accepted.includes(w))};
+ const pending=[];
+ function addRegion(row){
+  if(accepted.includes(row.word))return;
+  const existing=pending.find(p=>Math.abs((p.box.y0+p.box.y1-row.box.y0-row.box.y1)/2)<=Math.max(5,row.height*.7)&&Math.abs(p.box.x0-row.box.x0)<=Math.max(5,row.height*.7));
+  if(existing){existing.words=[...new Set([...existing.words,row.word])];existing.box={x0:Math.min(existing.box.x0,row.box.x0),y0:Math.min(existing.box.y0,row.box.y0),x1:Math.max(existing.box.x1,row.box.x1),y1:Math.max(existing.box.y1,row.box.y1)}}else pending.push({words:[row.word],box:{...row.box}});
+ }
+ for(const row of a.body||a.accepted)addRegion(row);
+ for(const row of b.body||b.accepted)addRegion({...row,height:row.height/ratioY,box:{x0:row.box.x0/ratioX,x1:row.box.x1/ratioX,y0:row.box.y0/ratioY,y1:row.box.y1/ratioY}});
+ return {words:[...new Set(accepted)],uncertain:[...new Set(uncertain)].filter(w=>!accepted.includes(w)),pending};
 }
 async function prepareShotImage(file){
  if(typeof createImageBitmap!=='function')return {image:file,ratioX:1,ratioY:1};
@@ -197,6 +205,26 @@ async function prepareShotImage(file){
   const image=await new Promise(resolve=>canvas.toBlob(blob=>resolve(blob||file),'image/png'));
   return image===file?{image:file,ratioX:1,ratioY:1}:{image,ratioX:canvas.width/width,ratioY:canvas.height/height};
  }catch(e){return {image:file,ratioX:1,ratioY:1}}finally{bitmap?.close()}
+}
+
+async function recheckScreenshotRegions(file,regions,onProgress){
+ if(!regions?.length||typeof createImageBitmap!=='function')return [];
+ let bitmap;const confirmed=[];
+ try{
+  bitmap=await createImageBitmap(file);await shotWorker.setParameters({tessedit_pageseg_mode:'7'});
+  for(let i=0;i<regions.length;i++){
+   onProgress(i+1,regions.length);const region=regions[i],b=region.box,h=b.y1-b.y0,pad=Math.max(12,h*.6);
+   const x=Math.max(0,Math.floor(b.x0-pad)),y=Math.max(0,Math.floor(b.y0-pad*.6));
+   const width=Math.min(bitmap.width-x,Math.ceil(b.x1+pad-x)),height=Math.min(bitmap.height-y,Math.ceil(b.y1+pad*.6-y));if(width<=0||height<=0)continue;
+   const scale=Math.max(1,Math.min(4,96/height)),canvas=document.createElement('canvas');canvas.width=Math.ceil(width*scale);canvas.height=Math.ceil(height*scale);
+   const context=canvas.getContext('2d');context.fillStyle='#fff';context.fillRect(0,0,canvas.width,canvas.height);context.imageSmoothingQuality='high';context.drawImage(bitmap,x,y,width,height,0,0,canvas.width,canvas.height);
+   const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));if(!blob)continue;
+   const result=await shotWorker.recognize(blob),word=String(result.data.text||'').normalize('NFKC').replace(/’/g,"'").trim().toLowerCase();
+   // A crop can confirm a spelling seen in the source passes, never invent one.
+   if(Number(result.data.confidence)>=90&&/^[a-z]+(?:[-'][a-z]+)*$/.test(word)&&region.words.includes(word))confirmed.push(word);
+  }
+ }finally{bitmap?.close();if(shotWorker)await shotWorker.setParameters({tessedit_pageseg_mode:'6'})}
+ return [...new Set(confirmed)];
 }
 
 let shotLightbox=null,shotViewScale=1;
@@ -280,7 +308,7 @@ async function readShots(){
  try{
  shotStatus('正在加载识别组件。每张截图将进行两次识别，并核对单词位置与拼写…');await loadShotOCR();
  shotWorker=await Tesseract.createWorker('eng',1);
- await shotWorker.setParameters({preserve_interword_spaces:'1'});
+ await shotWorker.setParameters({preserve_interword_spaces:'1',tessedit_pageseg_mode:'6'});
  const all=[];shotUncertainWords=[];
  for(let i=0;i<shotFiles.length;i++){
   shotStatus('第 '+(i+1)+' / '+shotFiles.length+' 张：正在识别原图（1/2）…');
@@ -289,12 +317,13 @@ async function readShots(){
   shotStatus('第 '+(i+1)+' / '+shotFiles.length+' 张：正在复核拼写和位置（2/2）…');
   const second=await shotWorker.recognize(prepared.image);
   const result=verifiedScreenshotWords(first.data,second.data,prepared.ratioX,prepared.ratioY);
-  all.push(...result.words);shotUncertainWords.push(...result.uncertain);
+  const extra=await recheckScreenshotRegions(shotFiles[i],result.pending,(n,total)=>shotStatus('第 '+(i+1)+' / '+shotFiles.length+' 张：原图局部复核 '+n+' / '+total+'…'));
+  all.push(...result.words,...extra);shotUncertainWords.push(...result.uncertain);
  }
  const words=[...new Set(all)],uncertain=[...new Set(shotUncertainWords)].filter(w=>!words.includes(w));
  if(!words.length){shotStatus('未找到通过两次识别及词列位置复核的单词，原校对内容已保留。请裁剪为单列词表后重试，或按原图手动输入。'+(uncertain.length?'\n未自动导入的疑似文字：'+uncertain.join('、'):'')+'\n没有把疑似文字加入词表。');return}
  shotEl('shot-text').value=words.join('\n');
- shotStatus('识别完成：'+words.length+' 个单词通过双次识别与位置复核，已去重。'+(uncertain.length?'\n以下疑似文字未加入词表：'+uncertain.join('、')+'。':'')+'\n请对照原图核对有无漏词，再开始测试。多列或少于3行的截图请先裁剪或手动输入。');
+ shotStatus('识别完成：'+words.length+' 个单词通过识别与原图位置复核，已去重。'+(uncertain.length?'\n以下疑似文字未加入词表：'+uncertain.join('、')+'。':'')+'\n请对照原图核对有无漏词，再开始测试。多列或少于3行的截图请先裁剪或手动输入。');
  }catch(e){shotStatus('识别失败：'+String(e?.message||e)+'。原校对内容已保留，可重试或按原图手动输入。')}
  finally{if(shotWorker){await shotWorker.terminate().catch(()=>{});shotWorker=null}delete button.dataset.busy;button.disabled=!shotFiles.length;shotEl('shot-files').disabled=false}
 }
