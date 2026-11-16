@@ -1,0 +1,15 @@
+const fs=require('fs'),vm=require('vm'),assert=require('node:assert/strict'),{test}=require('node:test');
+const html=fs.readFileSync(__dirname+'/wordlab-ocr-candidate.html','utf8');const code=html.slice(html.indexOf('let shotUncertainWords=[];'),html.indexOf('async function prepareShotImage'));
+const ctx=vm.createContext({});vm.runInContext(code,ctx);function run(a,b,rx=1,ry=1){ctx.a=a;ctx.b=b;ctx.rx=rx;ctx.ry=ry;return JSON.parse(JSON.stringify(vm.runInContext('verifiedScreenshotWords(a,b,rx,ry)',ctx)))}
+function data(words,scale=1){return {lines:words.map((text,i)=>({words:[{text,confidence:97,bbox:{x0:100*scale,x1:(100+text.length*16)*scale,y0:(200+i*50)*scale,y1:(225+i*50)*scale}}]}))}}
+test('same words and coordinates survive scale change',()=>assert.deepEqual(run(data(['bind','benefit','reliable']),data(['bind','benefit','reliable'],2),2,2).words,['bind','benefit','reliable']));
+test('one-pass hallucinations never enter test words',()=>assert.deepEqual(run(data(['bind','benefit','reliable']),data(['ine','benefit','reliable'])).words,['benefit','reliable']));
+test('isolated UI fragments ine,set,us,fei are excluded by layout',()=>{const a=data(['bind','benefit','reliable','quality','index']);for(const [i,w]of ['ine','set','us','fei'].entries())a.lines.push({words:[{text:w,confidence:99,bbox:{x0:800,x1:840,y0:i*40,y1:i*40+10}}]});assert.deepEqual(run(a,a).words,['bind','benefit','reliable','quality','index'])});
+test('legitimate short words are not blacklisted',()=>assert.deepEqual(run(data(['set','us','fee','rural']),data(['set','us','fee','rural'])).words,['set','us','fee','rural']));
+test('low-confidence recognized words are withheld',()=>{const a=data(['bind','benefit','reliable','quality']);a.lines[0].words[0].confidence=55;const r=run(a,a);assert(!r.words.includes('bind'));assert(r.uncertain.includes('bind'))});
+test('no-coordinate fallback never automatically imports arbitrary text',()=>assert.deepEqual(run({text:'ine\nset\nus\nfei'},{text:'ine\nset\nus\nfei'}).words,[]));
+test('no substring extraction from malformed tokens',()=>{const a=data(['bind123','benefit','reliable','quality']);assert(!run(a,a).words.includes('bind'))});
+test('split token is rejected rather than concatenated or truncated',()=>{const a=data(['under','benefit','reliable','quality']);a.lines[0].words.push({text:'estimate',confidence:98,bbox:{x0:181,x1:280,y0:200,y1:225}});assert(!run(a,a).words.includes('under'))});
+test('same spelling in a different location does not count as agreement',()=>{const a=data(['bind','benefit','reliable','quality']),b=data(['bind','benefit','reliable','quality']);b.lines[0].words[0].bbox.y0+=400;b.lines[0].words[0].bbox.y1+=400;assert(!run(a,b).words.includes('bind'))});
+test('a tiny header in the same column is excluded by size',()=>{const a=data(['bind','benefit','reliable','quality']);a.lines.push({words:[{text:'fei',confidence:99,bbox:{x0:100,x1:119,y0:10,y1:18}}]});assert(!run(a,a).words.includes('fei'))});
+test('fewer than three repeated headwords require manual verification',()=>assert.deepEqual(run(data(['bind','benefit']),data(['bind','benefit'])).words,[]));
