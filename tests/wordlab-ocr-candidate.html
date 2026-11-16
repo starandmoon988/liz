@@ -162,7 +162,7 @@ function screenshotWordCandidates(data){
  groups.sort((a,b)=>b.length-a.length||shotMedian(a.map(x=>x.box.x0))-shotMedian(b.map(x=>x.box.x0)));
  const dominant=groups[0]||[],typical=shotMedian(dominant.map(r=>r.height));
  if(dominant.length<3)return {accepted:[],uncertain:[...uncertain,...rows.map(r=>r.word)]};
- const body=dominant.filter(r=>r.height>=typical*.7&&r.height<=typical*1.45),accepted=body.filter(r=>r.confidence>=88);
+ const body=dominant.filter(r=>r.height>=typical*.5&&r.height<=typical*2),accepted=body.filter(r=>r.confidence>=88);
  const kept=new Set(accepted);
  return {accepted,body,uncertain:[...uncertain,...rows.filter(r=>!kept.has(r)).map(r=>r.word)]};
 }
