@@ -31,7 +31,7 @@ function makeQuiz(records,mode){
 }
 function grade(answer,given){return normalize(answer).toLowerCase()===normalize(given).toLowerCase()}
 function recordAnswer(progress,word,ok,now=Date.now()){
- const p=progress[word]||{attempts:0,correct:0,lapses:0,streak:0};p.attempts++;p.correct+=Number(ok);p.lapses+=Number(!ok);p.streak=ok?p.streak+1:0;p.last=now;
+ const p=Object.hasOwn(progress,word)?progress[word]:{attempts:0,correct:0,lapses:0,streak:0};p.attempts++;p.correct+=Number(ok);p.lapses+=Number(!ok);p.streak=ok?p.streak+1:0;p.last=now;
  const days=ok?[1,3,7,14,30,60][Math.min(p.streak-1,5)]:0;p.due=now+(ok?days*86400000:600000);progress[word]=p;return p;
 }
 const api={parseWords,extract,shuffle,makeQuiz,grade,recordAnswer};if(typeof module!=='undefined')module.exports=api;else root.WordLabCore=api;
