@@ -1,4 +1,4 @@
-<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>IELTS Word Lab · 截图词汇测试</title><style>*{box-sizing:border-box}body{margin:0;background:#f3f7f6;color:#203736;font:16px Arial,"Microsoft YaHei",sans-serif}.wrap{max-width:860px;margin:22px auto;padding:0 14px}header{background:#145f59;color:white;border-radius:18px;padding:22px}h1{margin:5px 0;font-size:27px}header p{opacity:.9;margin:7px 0}.panel{background:white;border:1px solid #dce8e4;border-radius:16px;padding:22px;margin-top:16px;box-shadow:0 2px 8px #0b39340a}.muted{color:#657875;font-size:14px;line-height:1.6}.nav,.flex{display:flex;gap:9px;flex-wrap:wrap;align-items:center}button{font:inherit;border:1px solid #c4d7d2;border-radius:10px;padding:11px 14px;background:white;color:#185d55;cursor:pointer}button.primary{background:#146e61;color:white;border-color:#146e61}button:disabled{opacity:.55;cursor:default}button.opt{display:block;width:100%;text-align:left;margin:9px 0;line-height:1.5}button.opt.sel{background:#e1f2ee;border-color:#167969}.tag{display:inline-block;background:#eaf4f0;padding:7px 9px;border-radius:8px;margin:4px;font-size:13px}.bar{height:9px;background:#e5efeb;border-radius:9px;overflow:hidden;margin:16px 0}.bar>div{height:100%;background:#2b9984}.question{font-size:21px;line-height:1.6;font-weight:600}.feedback{background:#eff8f4;border-left:4px solid #2b9984;padding:13px;margin-top:12px;line-height:1.6}.bad{color:#a13939}.good{color:#177452}.hidden{display:none!important}input[type=text]{width:100%;max-width:480px;border:1px solid #b6cfc7;border-radius:9px;padding:13px;font:inherit}table{border-collapse:collapse;width:100%;font-size:13px}td,th{border:1px solid #d7e4df;padding:9px;text-align:left;vertical-align:top}th{background:#e7f2ee}.pill{background:#e4f4ee;padding:6px 11px;border-radius:20px;font-size:13px}.stat{display:flex;gap:15px;flex-wrap:wrap;margin-top:14px}.stat span{background:#ffffff24;padding:9px 13px;border-radius:10px}label.multi{display:block;padding:10px;margin:7px 0;border:1px solid #d6e4df;border-radius:9px}.hint{background:#fff8e7;border-radius:10px;padding:12px;font-size:14px}button.audio{padding:4px 9px;font-size:13px;margin:2px 5px;border-radius:20px}.vocab{display:inline-block;padding:4px 7px;margin:3px;background:#f0f7f5;border-radius:8px}.feedback p{margin:8px 0}.feedback .rowline{padding:5px 0;border-bottom:1px solid #dce9e5}</style></head><body><div class="wrap"><header><small>IELTS WORD LAB · THREE ROUNDS</small><h1>今日50词 · 三轮实战检测</h1><p>中文识义 → 听力拼写 → 语境、搭配与用法</p><div class="stat"><span>今日词汇 <b id="word-count">50</b></span><span>已首测 <b id="done">0</b></span><span>错题本 <b id="wrong">0</b></span></div></header><p style="margin:16px 0"><a href="./next/" style="display:inline-block;background:#174b42;color:white;padding:12px 16px;border-radius:10px;text-decoration:none">新版测试入口 · International preview →</a></p><div id="shot-anchor"></div><main id="main"></main></div><script>const WORDS=[{"w": "indefinite", "zh": "无限期的；不明确的", "syn": "unlimited;unspecified"}, {"w": "collective", "zh": "集体的；共同的", "syn": "shared;joint"}, {"w": "giant", "zh": "巨大的；巨人", "syn": "enormous;huge"}, {"w": "enquiry", "zh": "询问；调查", "syn": "inquiry;investigation"}, {"w": "index", "zh": "索引；指数；指标", "syn": "indicator;measure"}, {"w": "departure", "zh": "离开；出发；偏离", "syn": "leaving;deviation"}, {"w": "heal", "zh": "治愈；愈合", "syn": "recover;restore"}, {"w": "issue", "zh": "问题；议题；发行；发布", "syn": "matter;problem"}, {"w": "fee", "zh": "费用；收费", "syn": "charge;payment"}, {"w": "enrich", "zh": "丰富；充实", "syn": "enhance;improve"}, {"w": "collapse", "zh": "倒塌；崩溃；骤降", "syn": "fall;breakdown"}, {"w": "underestimate", "zh": "低估", "syn": "undervalue;misjudge"}, {"w": "undergo", "zh": "经历；经受", "syn": "experience;go through"}, {"w": "advocate", "zh": "提倡；拥护；倡导者", "syn": "support;promote"}, {"w": "bias", "zh": "偏见；偏向", "syn": "prejudice;partiality"}, {"w": "colleague", "zh": "同事", "syn": "co-worker;workmate"}, {"w": "agency", "zh": "机构；代理处；作用", "syn": "organisation;body"}, {"w": "deny", "zh": "否认；拒绝给予", "syn": "reject;refuse"}, {"w": "affect", "zh": "影响；使感动", "syn": "influence;impact"}, {"w": "underground", "zh": "地下的；地铁；秘密的", "syn": "subterranean;metro"}, {"w": "tenant", "zh": "租户；承租人", "syn": "renter;occupant"}, {"w": "specialize", "zh": "专门研究；专攻", "syn": "focus;concentrate"}, {"w": "rural", "zh": "农村的；乡村的", "syn": "countryside;non-urban"}, {"w": "tender", "zh": "温柔的；嫩的；投标", "syn": "gentle;offer"}, {"w": "rumour", "zh": "传闻；谣言", "syn": "gossip;hearsay"}, {"w": "queue", "zh": "队列；排队", "syn": "line;wait in line"}, {"w": "uncover", "zh": "揭露；发现", "syn": "reveal;expose"}, {"w": "spare", "zh": "多余的；抽出；饶恕", "syn": "extra;available"}, {"w": "tendency", "zh": "倾向；趋势", "syn": "inclination;trend"}, {"w": "questionnaire", "zh": "调查问卷", "syn": "survey;form"}, {"w": "postpone", "zh": "推迟；延期", "syn": "delay;put off"}, {"w": "nerve", "zh": "神经；勇气", "syn": "courage;boldness"}, {"w": "poster", "zh": "海报；招贴画", "syn": "notice;placard"}, {"w": "possession", "zh": "拥有；财产；所有物", "syn": "ownership;belongings"}, {"w": "mechanism", "zh": "机制；机械装置", "syn": "process;system"}, {"w": "measure", "zh": "测量；措施；衡量", "syn": "assess;step"}, {"w": "potential", "zh": "潜力；潜在的", "syn": "possibility;capacity"}, {"w": "possibility", "zh": "可能性", "syn": "chance;likelihood"}, {"w": "quality", "zh": "质量；品质；特性", "syn": "standard;attribute"}, {"w": "media", "zh": "媒体；媒介", "syn": "press;communication channels"}, {"w": "gesture", "zh": "手势；姿态；表示", "syn": "movement;signal"}, {"w": "federal", "zh": "联邦的", "syn": "national;federated"}, {"w": "increasingly", "zh": "越来越多地", "syn": "progressively;more and more"}, {"w": "enlightened", "zh": "开明的；有见识的", "syn": "open-minded;informed"}, {"w": "headquarters", "zh": "总部；司令部", "syn": "head office;main office"}, {"w": "isolate", "zh": "隔离；孤立", "syn": "separate;segregate"}, {"w": "isolated", "zh": "孤立的；偏远的", "syn": "remote;separated"}, {"w": "incredible", "zh": "难以置信的；极好的", "syn": "unbelievable;extraordinary"}, {"w": "jungle", "zh": "丛林；密林", "syn": "rainforest;forest"}, {"w": "lecture", "zh": "讲座；授课；训斥", "syn": "talk;presentation"}];
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>IELTS Word Lab · 截图词汇测试</title><style>*{box-sizing:border-box}body{margin:0;background:#f3f7f6;color:#203736;font:16px Arial,"Microsoft YaHei",sans-serif}.wrap{max-width:860px;margin:22px auto;padding:0 14px}header{background:#145f59;color:white;border-radius:18px;padding:22px}h1{margin:5px 0;font-size:27px}header p{opacity:.9;margin:7px 0}.panel{background:white;border:1px solid #dce8e4;border-radius:16px;padding:22px;margin-top:16px;box-shadow:0 2px 8px #0b39340a}.muted{color:#657875;font-size:14px;line-height:1.6}.nav,.flex{display:flex;gap:9px;flex-wrap:wrap;align-items:center}button{font:inherit;border:1px solid #c4d7d2;border-radius:10px;padding:11px 14px;background:white;color:#185d55;cursor:pointer}button.primary{background:#146e61;color:white;border-color:#146e61}button:disabled{opacity:.55;cursor:default}button.opt{display:block;width:100%;text-align:left;margin:9px 0;line-height:1.5}button.opt.sel{background:#e1f2ee;border-color:#167969}.tag{display:inline-block;background:#eaf4f0;padding:7px 9px;border-radius:8px;margin:4px;font-size:13px}.bar{height:9px;background:#e5efeb;border-radius:9px;overflow:hidden;margin:16px 0}.bar>div{height:100%;background:#2b9984}.question{font-size:21px;line-height:1.6;font-weight:600}.feedback{background:#eff8f4;border-left:4px solid #2b9984;padding:13px;margin-top:12px;line-height:1.6}.bad{color:#a13939}.good{color:#177452}.hidden{display:none!important}input[type=text]{width:100%;max-width:480px;border:1px solid #b6cfc7;border-radius:9px;padding:13px;font:inherit}table{border-collapse:collapse;width:100%;font-size:13px}td,th{border:1px solid #d7e4df;padding:9px;text-align:left;vertical-align:top}th{background:#e7f2ee}.pill{background:#e4f4ee;padding:6px 11px;border-radius:20px;font-size:13px}.stat{display:flex;gap:15px;flex-wrap:wrap;margin-top:14px}.stat span{background:#ffffff24;padding:9px 13px;border-radius:10px}label.multi{display:block;padding:10px;margin:7px 0;border:1px solid #d6e4df;border-radius:9px}.hint{background:#fff8e7;border-radius:10px;padding:12px;font-size:14px}button.audio{padding:4px 9px;font-size:13px;margin:2px 5px;border-radius:20px}.vocab{display:inline-block;padding:4px 7px;margin:3px;background:#f0f7f5;border-radius:8px}.feedback p{margin:8px 0}.feedback .rowline{padding:5px 0;border-bottom:1px solid #dce9e5}</style></head><body><div class="wrap"><header><small>IELTS WORD LAB · THREE ROUNDS</small><h1>今日50词 · 三轮实战检测</h1><p>中文识义 → 听力拼写 → 语境、搭配与用法</p><div class="stat"><span>今日词汇 <b id="word-count">50</b></span><span>已首测 <b id="done">0</b></span><span>错题本 <b id="wrong">0</b></span></div></header><div id="shot-anchor"></div><main id="main"></main></div><script>const WORDS=[{"w": "indefinite", "zh": "无限期的；不明确的", "syn": "unlimited;unspecified"}, {"w": "collective", "zh": "集体的；共同的", "syn": "shared;joint"}, {"w": "giant", "zh": "巨大的；巨人", "syn": "enormous;huge"}, {"w": "enquiry", "zh": "询问；调查", "syn": "inquiry;investigation"}, {"w": "index", "zh": "索引；指数；指标", "syn": "indicator;measure"}, {"w": "departure", "zh": "离开；出发；偏离", "syn": "leaving;deviation"}, {"w": "heal", "zh": "治愈；愈合", "syn": "recover;restore"}, {"w": "issue", "zh": "问题；议题；发行；发布", "syn": "matter;problem"}, {"w": "fee", "zh": "费用；收费", "syn": "charge;payment"}, {"w": "enrich", "zh": "丰富；充实", "syn": "enhance;improve"}, {"w": "collapse", "zh": "倒塌；崩溃；骤降", "syn": "fall;breakdown"}, {"w": "underestimate", "zh": "低估", "syn": "undervalue;misjudge"}, {"w": "undergo", "zh": "经历；经受", "syn": "experience;go through"}, {"w": "advocate", "zh": "提倡；拥护；倡导者", "syn": "support;promote"}, {"w": "bias", "zh": "偏见；偏向", "syn": "prejudice;partiality"}, {"w": "colleague", "zh": "同事", "syn": "co-worker;workmate"}, {"w": "agency", "zh": "机构；代理处；作用", "syn": "organisation;body"}, {"w": "deny", "zh": "否认；拒绝给予", "syn": "reject;refuse"}, {"w": "affect", "zh": "影响；使感动", "syn": "influence;impact"}, {"w": "underground", "zh": "地下的；地铁；秘密的", "syn": "subterranean;metro"}, {"w": "tenant", "zh": "租户；承租人", "syn": "renter;occupant"}, {"w": "specialize", "zh": "专门研究；专攻", "syn": "focus;concentrate"}, {"w": "rural", "zh": "农村的；乡村的", "syn": "countryside;non-urban"}, {"w": "tender", "zh": "温柔的；嫩的；投标", "syn": "gentle;offer"}, {"w": "rumour", "zh": "传闻；谣言", "syn": "gossip;hearsay"}, {"w": "queue", "zh": "队列；排队", "syn": "line;wait in line"}, {"w": "uncover", "zh": "揭露；发现", "syn": "reveal;expose"}, {"w": "spare", "zh": "多余的；抽出；饶恕", "syn": "extra;available"}, {"w": "tendency", "zh": "倾向；趋势", "syn": "inclination;trend"}, {"w": "questionnaire", "zh": "调查问卷", "syn": "survey;form"}, {"w": "postpone", "zh": "推迟；延期", "syn": "delay;put off"}, {"w": "nerve", "zh": "神经；勇气", "syn": "courage;boldness"}, {"w": "poster", "zh": "海报；招贴画", "syn": "notice;placard"}, {"w": "possession", "zh": "拥有；财产；所有物", "syn": "ownership;belongings"}, {"w": "mechanism", "zh": "机制；机械装置", "syn": "process;system"}, {"w": "measure", "zh": "测量；措施；衡量", "syn": "assess;step"}, {"w": "potential", "zh": "潜力；潜在的", "syn": "possibility;capacity"}, {"w": "possibility", "zh": "可能性", "syn": "chance;likelihood"}, {"w": "quality", "zh": "质量；品质；特性", "syn": "standard;attribute"}, {"w": "media", "zh": "媒体；媒介", "syn": "press;communication channels"}, {"w": "gesture", "zh": "手势；姿态；表示", "syn": "movement;signal"}, {"w": "federal", "zh": "联邦的", "syn": "national;federated"}, {"w": "increasingly", "zh": "越来越多地", "syn": "progressively;more and more"}, {"w": "enlightened", "zh": "开明的；有见识的", "syn": "open-minded;informed"}, {"w": "headquarters", "zh": "总部；司令部", "syn": "head office;main office"}, {"w": "isolate", "zh": "隔离；孤立", "syn": "separate;segregate"}, {"w": "isolated", "zh": "孤立的；偏远的", "syn": "remote;separated"}, {"w": "incredible", "zh": "难以置信的；极好的", "syn": "unbelievable;extraordinary"}, {"w": "jungle", "zh": "丛林；密林", "syn": "rainforest;forest"}, {"w": "lecture", "zh": "讲座；授课；训斥", "syn": "talk;presentation"}];
 
 
 const LISTEN=["enquiry", "questionnaire", "queue", "colleague", "headquarters", "rural", "tenant", "lecture", "departure", "gesture"];
@@ -119,23 +119,50 @@ let shotFiles=[],shotURLs=[],shotWorker=null,shotLoading=null;
 const shotEl=id=>document.getElementById(id);
 function shotStatus(s){shotEl('shot-status').textContent=s}
 // Review badges are UI metadata, not vocabulary.
+let shotUncertainWords=[];
 function screenshotEnglishText(data){
- // Vocabulary screenshots contain one headword per row. Never join UI
- // labels (which English OCR can hallucinate as words) to the headword.
- const lines=data.lines||[];
- if(!lines.length)return String(data.text||'').split(/\r?\n/).map(line=>{
-  const m=line.trim().match(/^([a-zA-Z]+(?:[-'’][a-zA-Z]+)*)(?=\s|$|[^a-zA-Z])/);
-  return m&&m[1].length>=2?m[1]:'';
- }).filter(Boolean).join('\n');
- return lines.map(line=>{
+ // Preserve the screenshot spelling: no dictionary correction, completion or
+ // joining of adjacent tokens. Only the headword at the start of a row counts.
+ let lines=data.lines;
+ if(!lines?.length)lines=(data.blocks||[]).flatMap(b=>(b.paragraphs||[]).flatMap(p=>p.lines||[]));
+ if(!lines?.length)lines=String(data.text||'').split(/\r?\n/).map(text=>({text,plain:true}));
+ const words=[],seen=new Set();
+ for(const line of lines){
+  const lineText=String(line.text||(line.words||[]).map(w=>w.text||'').join(' ')).trim();
+  // Filter complete, recognizable toolbar phrases, never an isolated valid
+  // vocabulary word such as "review", "learn" or "next".
+  if(/^(?:review (?:words|now|all)|learn (?:words|now)|select all|word list|daily (?:goal|progress)|next (?:page|word)|back to (?:home|list)|\d+\s+(?:words?|days?))(?:\s*[.!:]?\s*)$/i.test(lineText))continue;
   const items=(line.words||[]).filter(item=>String(item.text||'').trim());
-  const first=items[0];
-  if(!first)return '';
-  const text=String(first.text).trim();
-  if(!/^[a-zA-Z]+(?:[-'’][a-zA-Z]+)*$/.test(text))return '';
-  if(text.length<2||Number(first.confidence)<65)return '';
-  return text;
- }).filter(Boolean).join('\n');
+  const first=items.find(item=>!/^(?:\d+[.)、]?|[•·○●▪\-–—])$/.test(String(item.text).trim()));
+  const raw=first?String(first.text):lineText.replace(/^\s*(?:\d+[.)、]?\s+|[•·○●▪]\s*)/,'');
+  const m=raw.normalize('NFKC').replace(/’/g,"'").trim().match(/^[("“]*([A-Za-z]+(?:[-'][A-Za-z]+)*)(?=$|[\s)"”,.;:!?/[\u3400-\u9fff])/);
+  if(!m||m[1].length<2)continue;
+  const w=m[1].toLowerCase();
+  if(seen.has(w))continue;
+  seen.add(w);words.push(w);
+  const confidence=first?Number(first.confidence):NaN;
+  if(!Number.isFinite(confidence)||confidence<80)shotUncertainWords.push(w);
+ }
+ return words.join('\n');
+}
+async function prepareShotImage(file){
+ // Local-only scaling for small screenshots; preserve aspect ratio and cap the
+ // output size. If canvas/bitmap is unavailable, OCR the original file.
+ if(typeof createImageBitmap!=='function')return file;
+ let bitmap;
+ try{
+  bitmap=await createImageBitmap(file);
+  const {width,height}=bitmap;
+  const scale=Math.min(width<1600?1600/width:1,3600/Math.max(width,height));
+  const canvas=document.createElement('canvas');
+  canvas.width=Math.max(1,Math.round(width*scale));canvas.height=Math.max(1,Math.round(height*scale));
+  const context=canvas.getContext('2d');if(!context)return file;
+  context.fillStyle='#fff';context.fillRect(0,0,canvas.width,canvas.height);
+  context.imageSmoothingEnabled=true;context.imageSmoothingQuality='high';
+  context.filter='grayscale(1) contrast(1.1)';
+  context.drawImage(bitmap,0,0,canvas.width,canvas.height);
+  return await new Promise(resolve=>canvas.toBlob(blob=>resolve(blob||file),'image/png'));
+ }catch(e){return file}finally{bitmap?.close()}
 }
 function parseShotText(text){
  const out=[],seen=new Set();
@@ -176,12 +203,13 @@ async function readShots(){
  shotStatus('正在加载识别组件与模型，首次使用可能需要较长时间…');await loadShotOCR();
  shotWorker=await Tesseract.createWorker('eng',1,{logger:m=>{if(m.status==='recognizing text')shotStatus('正在识别文字 '+Math.round((m.progress||0)*100)+'%')}});
  await shotWorker.setParameters({preserve_interword_spaces:'1'});
- let all=[];
- for(let i=0;i<shotFiles.length;i++){shotStatus('正在处理第 '+(i+1)+' / '+shotFiles.length+' 张截图…');const result=await shotWorker.recognize(shotFiles[i]);all.push(screenshotEnglishText(result.data))}
+ let all=[];shotUncertainWords=[];
+ for(let i=0;i<shotFiles.length;i++){shotStatus('正在处理第 '+(i+1)+' / '+shotFiles.length+' 张截图…');const image=await prepareShotImage(shotFiles[i]);const result=await shotWorker.recognize(image);all.push(screenshotEnglishText(result.data))}
  const raw=all.join('\n'),parsed=parseShotText(raw);
  const cleaned=parsed.map(x=>x.w).join('\n');
  shotEl('shot-text').value=cleaned;
- shotStatus('识别完成：提取 '+parsed.length+' 个候选词。按每行首个英文单词提取，不再拼接后面的提示文字。请核对拼写后生成测试。');
+ const uncertain=[...new Set(shotUncertainWords)];
+ shotStatus('识别完成：'+parsed.length+' 个单词，已去重；仅提取每行词首，不拼接后面的提示。'+(uncertain.length?'\n请重点核对这些低置信度单词：'+uncertain.join('、')+'。':'')+'\n请对照截图核对后开始测试；多列截图请先裁成单列。');
  }catch(e){shotStatus('识别失败：'+e.message+' 你仍可在下方粘贴或输入词表。')}
  finally{if(shotWorker){await shotWorker.terminate().catch(()=>{});shotWorker=null}delete button.dataset.busy;button.disabled=!shotFiles.length;shotEl('shot-files').disabled=false}
 }
