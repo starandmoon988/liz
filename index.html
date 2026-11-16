@@ -102,12 +102,25 @@ function restore(ev){let f=ev.target.files[0];if(!f)return;let r=new FileReader(
 stats();home();</script>
 <style>
 #import-panel textarea{width:100%;min-height:210px;padding:12px;border:1px solid #b6cfc7;border-radius:10px;font:16px/1.7 Arial,sans-serif}#shot-previews{display:flex;gap:8px;overflow:auto;margin:12px 0}#shot-previews img{height:110px;border-radius:8px;border:1px solid #dce8e4}.import-status{white-space:pre-wrap}#import-panel button:focus-visible{outline:3px solid #f1b74b;outline-offset:3px}
+
+/* Screenshot inspection stays inside the original import workflow. */
+#shot-previews img{cursor:zoom-in}
+#shot-previews img:focus-visible{outline:3px solid #f1b74b;outline-offset:3px}
+#shot-lightbox{width:96vw;max-width:1500px;height:92dvh;max-height:94vh;padding:0;border:1px solid #b6cfc7;border-radius:14px;color:#203736;background:#fff}
+#shot-lightbox::backdrop{background:#122c2bd9}
+#shot-lightbox[open]{display:flex;flex-direction:column}
+#shot-lightbox .shot-lightbox-toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:12px;border-bottom:1px solid #dce8e4;flex-shrink:0}
+#shot-lightbox-title{flex:1 1 180px;overflow-wrap:anywhere;font-size:14px}
+#shot-lightbox-stage{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;background:#e7eeeb;padding:16px}
+#shot-lightbox-image{display:block;margin:auto;max-width:none;max-height:none;height:auto;user-select:none}
+#shot-lightbox .shot-lightbox-note{margin:0;padding:8px 12px;font-size:13px;color:#657875}
+@media(max-width:600px){#shot-lightbox{width:100vw;max-width:100vw;height:96dvh;border-radius:10px}#shot-lightbox button{min-height:44px;padding:8px 10px}#shot-lightbox-title{flex-basis:100%}}
 </style>
 <section class="panel" id="import-panel">
 <div class="flex"><span class="pill">今天学什么，就测什么</span><h2>截图生成词汇测试</h2></div>
 <p class="muted">上传单词截图 → 校对识别结果 → 开始测试。支持 PNG、JPG、WebP，多张截图可一起识别；请尽量裁掉无关标题。</p>
 <div class="flex"><label><button type="button" class="primary" onclick="document.getElementById('shot-files').click()">＋ 上传单词截图</button><input hidden id="shot-files" type="file" accept="image/png,image/jpeg,image/webp" multiple></label><button id="shot-read" type="button" disabled onclick="readShots()">识别截图文字</button></div>
-<div id="shot-previews"></div><p id="shot-status" class="muted import-status" role="status" aria-live="polite">截图仅在本机浏览器处理；首次识别需联网加载文字识别组件与英文模型。</p>
+<div id="shot-previews" aria-label="已上传截图，点击图片放大查看"></div><p class="muted" style="margin:4px 0">点击截图可放大查看，支持缩放；关闭后继续校对。</p><p id="shot-status" class="muted import-status" role="status" aria-live="polite">截图仅在本机浏览器处理；首次识别需联网加载文字识别组件与英文模型。</p>
 <label for="shot-text"><b>校对英文单词</b></label><p class="muted">每行一个英文单词或短语，例如 abandon。截图按每行首个英文单词提取，忽略后续复习提示，不自动拼成短语；手动输入仍支持短语。核对拼写后直接进入新词三轮测试，无需填写中文。也可直接粘贴英文词表。</p>
 <textarea id="shot-text" spellcheck="false" placeholder="abandon&#10;benefit"></textarea>
 <p><label for="practice-set"><b>选择练习套型：</b></label> <select id="practice-set" onchange="changePracticeSet(this.value)" style="font:inherit;padding:10px;border-radius:8px;max-width:100%"><option value="1">第1套 · 基础识义与直接语境</option><option value="2">第2套 · 反向提取与语境词义</option><option value="3">第3套 · 同义辨析与近义干扰</option><option value="4">第4套 · 搭配与整句辨别</option><option value="5">第5套 · 综合迁移与混合题型</option></select></p><p class="muted">标准每套40道词义＋10道高频听写＋10道语境。少于50个新词按实际数量；超过50词分批，所有新词完成后接旧词复习。</p><div class="flex" style="margin-top:12px"><button class="primary" id="batch-generate" onclick="generateShotQuiz()">开始新词三轮测试</button><button onclick="resumeShotQuiz()">继续上次截图词表</button><button onclick="resetScreenshotBatch()">使用原50词</button></div>
@@ -164,6 +177,47 @@ async function prepareShotImage(file){
   return await new Promise(resolve=>canvas.toBlob(blob=>resolve(blob||file),'image/png'));
  }catch(e){return file}finally{bitmap?.close()}
 }
+
+let shotLightbox=null,shotViewScale=1;
+function ensureShotLightbox(){
+ if(shotLightbox)return shotLightbox;
+ const dialog=document.createElement('dialog');dialog.id='shot-lightbox';
+ dialog.setAttribute('aria-labelledby','shot-lightbox-title');
+ dialog.innerHTML='<div class="shot-lightbox-toolbar"><b id="shot-lightbox-title">截图查看</b><button type="button" id="shot-zoom-out" aria-label="缩小截图">缩小 −</button><button type="button" id="shot-zoom-in" aria-label="放大截图">放大 ＋</button><button type="button" id="shot-zoom-fit">适应窗口</button><button type="button" id="shot-zoom-original">原图 100%</button><button type="button" id="shot-zoom-close" autofocus>关闭</button></div><div id="shot-lightbox-stage"><img id="shot-lightbox-image" alt="放大的单词截图" draggable="false"></div><p class="shot-lightbox-note">放大后可上下、左右滚动查看。按 Esc 或“关闭”返回校对。</p>';
+ document.body.append(dialog);shotLightbox=dialog;
+ shotEl('shot-zoom-out').onclick=()=>setShotZoom(shotViewScale/1.3);
+ shotEl('shot-zoom-in').onclick=()=>setShotZoom(shotViewScale*1.3);
+ shotEl('shot-zoom-fit').onclick=fitShotZoom;
+ shotEl('shot-zoom-original').onclick=()=>setShotZoom(1);
+ shotEl('shot-zoom-close').onclick=()=>dialog.close();
+ dialog.addEventListener('click',event=>{if(event.target===dialog){const r=dialog.getBoundingClientRect();if(event.clientX<r.left||event.clientX>r.right||event.clientY<r.top||event.clientY>r.bottom)dialog.close()}});
+ // Enter in this dialog must never submit or advance a quiz underneath it.
+ dialog.addEventListener('keydown',event=>event.stopPropagation());
+ dialog.addEventListener('close',()=>{shotEl('shot-lightbox-image').onload=null;shotEl('shot-lightbox-image').removeAttribute('src')});
+ return dialog;
+}
+function setShotZoom(scale,reset=false){
+ const image=shotEl('shot-lightbox-image'),stage=shotEl('shot-lightbox-stage');
+ if(!image?.naturalWidth)return;
+ const oldWidth=image.getBoundingClientRect().width||1,oldHeight=image.getBoundingClientRect().height||1;
+ const x=Math.min(1,(stage.scrollLeft+stage.clientWidth/2)/oldWidth),y=Math.min(1,(stage.scrollTop+stage.clientHeight/2)/oldHeight);
+ shotViewScale=Math.max(.05,Math.min(8,scale));image.style.width=Math.round(image.naturalWidth*shotViewScale)+'px';
+ shotEl('shot-zoom-original').textContent='原图 100%（当前 '+Math.round(shotViewScale*100)+'%）';
+ if(reset){stage.scrollLeft=0;stage.scrollTop=0}else{stage.scrollLeft=x*image.naturalWidth*shotViewScale-stage.clientWidth/2;stage.scrollTop=y*image.naturalHeight*shotViewScale-stage.clientHeight/2}
+}
+function fitShotZoom(){
+ const image=shotEl('shot-lightbox-image'),stage=shotEl('shot-lightbox-stage');
+ if(image?.naturalWidth)setShotZoom(Math.min(1,Math.max(1,stage.clientWidth-32)/image.naturalWidth,Math.max(1,stage.clientHeight-32)/image.naturalHeight),true);
+}
+function openShotImage(index){
+ const url=shotURLs[index];if(!url)return;
+ const dialog=ensureShotLightbox(),image=shotEl('shot-lightbox-image');
+ shotEl('shot-lightbox-title').textContent='截图 '+(index+1)+' / '+shotURLs.length+' · '+(shotFiles[index]?.name||'');
+ image.onload=fitShotZoom;image.alt=shotFiles[index]?.name||'单词截图';image.style.width='auto';image.src=url;
+ if(!dialog.open)dialog.showModal();
+ if(image.complete&&image.naturalWidth)fitShotZoom();
+}
+
 function parseShotText(text){
  const out=[],seen=new Set();
  for(let line of text.split(/\r?\n/)){
@@ -185,7 +239,7 @@ shotEl('shot-files').addEventListener('change',ev=>{
  if(files.length>10){shotStatus('一次最多上传10张截图，请重新选择。');shotEl('shot-read').disabled=true;shotEl('shot-previews').replaceChildren();return}
  for(const f of files){if(!/^image\/(png|jpeg|webp)$/.test(f.type)||f.size>15*1024*1024){shotStatus('请选择PNG、JPG或WebP，每张不超过15MB。');shotFiles=[];break}shotFiles.push(f)}
  shotEl('shot-previews').replaceChildren();
- for(const f of shotFiles){const img=document.createElement('img');const u=URL.createObjectURL(f);shotURLs.push(u);img.src=u;img.alt=f.name;shotEl('shot-previews').append(img)}
+ for(const f of shotFiles){const img=document.createElement('img');const u=URL.createObjectURL(f);shotURLs.push(u);img.src=u;img.alt=f.name;img.title='点击放大查看';img.tabIndex=0;img.setAttribute('role','button');const index=shotURLs.length-1;img.onclick=()=>openShotImage(index);img.onkeydown=event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();event.stopPropagation();openShotImage(index)}};shotEl('shot-previews').append(img)}
  shotEl('shot-read').disabled=!shotFiles.length;
  if(shotFiles.length)shotStatus('已选择 '+shotFiles.length+' 张截图。点击“识别截图文字”开始，本次识别结果会替换编辑区旧结果，避免旧误词残留。');
 });
