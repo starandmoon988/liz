@@ -292,10 +292,10 @@ async function readShots(){
   all.push(...result.words);shotUncertainWords.push(...result.uncertain);
  }
  const words=[...new Set(all)],uncertain=[...new Set(shotUncertainWords)].filter(w=>!words.includes(w));
- if(!words.length){shotStatus('未找到通过两次识别及词列位置复核的单词，原校对内容已保留。请裁剪为单列词表后重试，或按原图手动输入。'+(uncertain.length?'\n未自动导入的疑似文字：'+uncertain.join('、'):'')+'\\n没有把疑似文字加入词表。');return}
+ if(!words.length){shotStatus('未找到通过两次识别及词列位置复核的单词，原校对内容已保留。请裁剪为单列词表后重试，或按原图手动输入。'+(uncertain.length?'\n未自动导入的疑似文字：'+uncertain.join('、'):'')+'\n没有把疑似文字加入词表。');return}
  shotEl('shot-text').value=words.join('\n');
  shotStatus('识别完成：'+words.length+' 个单词通过双次识别与位置复核，已去重。'+(uncertain.length?'\n以下疑似文字未加入词表：'+uncertain.join('、')+'。':'')+'\n请对照原图核对有无漏词，再开始测试。多列或少于3行的截图请先裁剪或手动输入。');
- }catch(e){shotStatus('识别失败：'+e.message+'。原校对内容已保留，可重试或按原图手动输入。')}
+ }catch(e){shotStatus('识别失败：'+String(e?.message||e)+'。原校对内容已保留，可重试或按原图手动输入。')}
  finally{if(shotWorker){await shotWorker.terminate().catch(()=>{});shotWorker=null}delete button.dataset.busy;button.disabled=!shotFiles.length;shotEl('shot-files').disabled=false}
 }
 
