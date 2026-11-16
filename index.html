@@ -133,49 +133,98 @@ const shotEl=id=>document.getElementById(id);
 function shotStatus(s){shotEl('shot-status').textContent=s}
 // Review badges are UI metadata, not vocabulary.
 let shotUncertainWords=[];
-function screenshotEnglishText(data){
- // Preserve the screenshot spelling: no dictionary correction, completion or
- // joining of adjacent tokens. Only the headword at the start of a row counts.
+function shotMedian(values){const a=values.filter(Number.isFinite).sort((a,b)=>a-b);return a.length?a[Math.floor(a.length/2)]:0}
+function screenshotWordCandidates(data){
  let lines=data.lines;
  if(!lines?.length)lines=(data.blocks||[]).flatMap(b=>(b.paragraphs||[]).flatMap(p=>p.lines||[]));
- if(!lines?.length)lines=String(data.text||'').split(/\r?\n/).map(text=>({text,plain:true}));
- const words=[],seen=new Set();
+ // Text without coordinates cannot prove where a candidate came from.
+ if(!lines?.length)return {accepted:[],uncertain:String(data.text||'').split(/\r?\n/).map(s=>s.trim()).filter(Boolean)};
+ const rows=[],uncertain=[];
  for(const line of lines){
-  const lineText=String(line.text||(line.words||[]).map(w=>w.text||'').join(' ')).trim();
-  // Filter complete, recognizable toolbar phrases, never an isolated valid
-  // vocabulary word such as "review", "learn" or "next".
-  if(/^(?:review (?:words|now|all)|learn (?:words|now)|select all|word list|daily (?:goal|progress)|next (?:page|word)|back to (?:home|list)|\d+\s+(?:words?|days?))(?:\s*[.!:]?\s*)$/i.test(lineText))continue;
   const items=(line.words||[]).filter(item=>String(item.text||'').trim());
-  const first=items.find(item=>!/^(?:\d+[.)、]?|[•·○●▪\-–—])$/.test(String(item.text).trim()));
-  const raw=first?String(first.text):lineText.replace(/^\s*(?:\d+[.)、]?\s+|[•·○●▪]\s*)/,'');
-  const m=raw.normalize('NFKC').replace(/’/g,"'").trim().match(/^[("“]*([A-Za-z]+(?:[-'][A-Za-z]+)*)(?=$|[\s)"”,.;:!?/[\u3400-\u9fff])/);
-  if(!m||m[1].length<2)continue;
-  const w=m[1].toLowerCase();
-  if(seen.has(w))continue;
-  seen.add(w);words.push(w);
-  const confidence=first?Number(first.confidence):NaN;
-  if(!Number.isFinite(confidence)||confidence<80)shotUncertainWords.push(w);
+  const firstIndex=items.findIndex(item=>!/^(?:\d+[.)、]?|[•·○●▪\-–—])$/.test(String(item.text).trim()));
+  if(firstIndex<0)continue;
+  const first=items[firstIndex],w=String(first.text).normalize('NFKC').replace(/’/g,"'").trim().toLowerCase(),box=first.bbox;
+  // Match the complete OCR token, not a leading fragment of a longer token.
+  if(!/^[a-z]+(?:[-'][a-z]+)*$/.test(w)||w.length<2||w.length>45)continue;
+  const confidence=Number(first.confidence);
+  if(!box||![box.x0,box.x1,box.y0,box.y1].every(Number.isFinite)||box.x1<=box.x0||box.y1<=box.y0||!Number.isFinite(confidence)||confidence<55){uncertain.push(w);continue}
+  const height=box.y1-box.y0,next=items[firstIndex+1];
+  // A nearly touching English token can be a split headword. Never glue it,
+  // and never automatically import only the first fragment.
+  if(next?.bbox&&/^[a-z]+$/i.test(String(next.text))&&next.bbox.x0-box.x1<height*.25&&next.bbox.x0>=box.x0){uncertain.push(w);continue}
+  rows.push({word:w,box:{...box},height,confidence});
  }
- return words.join('\n');
+ // Vocabulary headwords normally form a repeated column in a single-column
+ // screenshot. Discard isolated UI fragments and text at a different font size.
+ const groups=[];
+ for(const r of rows){const group=groups.find(g=>Math.abs(shotMedian(g.map(x=>x.box.x0))-r.box.x0)<=Math.max(5,shotMedian(g.map(x=>x.height))*.7));if(group)group.push(r);else groups.push([r])}
+ groups.sort((a,b)=>b.length-a.length||shotMedian(a.map(x=>x.box.x0))-shotMedian(b.map(x=>x.box.x0)));
+ const dominant=groups[0]||[],typical=shotMedian(dominant.map(r=>r.height));
+ if(dominant.length<3)return {accepted:[],uncertain:[...uncertain,...rows.map(r=>r.word)]};
+ const body=dominant.filter(r=>r.height>=typical*.5&&r.height<=typical*2),accepted=body.filter(r=>r.confidence>=88);
+ const kept=new Set(accepted);
+ return {accepted,body,uncertain:[...uncertain,...rows.filter(r=>!kept.has(r)).map(r=>r.word)]};
+}
+function screenshotEnglishText(data){
+ const result=screenshotWordCandidates(data);shotUncertainWords.push(...result.uncertain);
+ return [...new Set(result.accepted.map(r=>r.word))].join('\n');
+}
+function verifiedScreenshotWords(original,processed,ratioX=1,ratioY=1){
+ const a=screenshotWordCandidates(original),b=screenshotWordCandidates(processed);
+ const accepted=[],uncertain=[...a.uncertain,...b.uncertain];
+ for(const row of a.accepted){
+  const matching=b.accepted.find(other=>other.word===row.word&&Math.abs(other.box.x0/ratioX-row.box.x0)<=Math.max(5,row.height*.6)&&Math.abs((other.box.y0+other.box.y1)/(2*ratioY)-(row.box.y0+row.box.y1)/2)<=Math.max(5,row.height*.7));
+  if(matching)accepted.push(row.word);else uncertain.push(row.word);
+ }
+ for(const row of b.accepted)if(!accepted.includes(row.word))uncertain.push(row.word);
+ const pending=[];
+ function addRegion(row){
+  if(accepted.includes(row.word))return;
+  const existing=pending.find(p=>Math.abs((p.box.y0+p.box.y1-row.box.y0-row.box.y1)/2)<=Math.max(5,row.height*.7)&&Math.abs(p.box.x0-row.box.x0)<=Math.max(5,row.height*.7));
+  if(existing){existing.words=[...new Set([...existing.words,row.word])];existing.box={x0:Math.min(existing.box.x0,row.box.x0),y0:Math.min(existing.box.y0,row.box.y0),x1:Math.max(existing.box.x1,row.box.x1),y1:Math.max(existing.box.y1,row.box.y1)}}else pending.push({words:[row.word],box:{...row.box}});
+ }
+ for(const row of a.body||a.accepted)addRegion(row);
+ for(const row of b.body||b.accepted)addRegion({...row,height:row.height/ratioY,box:{x0:row.box.x0/ratioX,x1:row.box.x1/ratioX,y0:row.box.y0/ratioY,y1:row.box.y1/ratioY}});
+ return {words:[...new Set(accepted)],uncertain:[...new Set(uncertain)].filter(w=>!accepted.includes(w)),pending};
 }
 async function prepareShotImage(file){
- // Local-only scaling for small screenshots; preserve aspect ratio and cap the
- // output size. If canvas/bitmap is unavailable, OCR the original file.
- if(typeof createImageBitmap!=='function')return file;
+ if(typeof createImageBitmap!=='function')return {image:file,ratioX:1,ratioY:1};
  let bitmap;
  try{
-  bitmap=await createImageBitmap(file);
-  const {width,height}=bitmap;
-  const scale=Math.min(width<1600?1600/width:1,3600/Math.max(width,height));
+  bitmap=await createImageBitmap(file);const {width,height}=bitmap;
+  // Clear screenshots need no forced downscaling or aggressive contrast.
+  // A modest second rendering is a cross-check, never a source of extra words.
+  const scale=Math.min(width<1600?1600/width:1.25,4800/Math.max(width,height));
   const canvas=document.createElement('canvas');
   canvas.width=Math.max(1,Math.round(width*scale));canvas.height=Math.max(1,Math.round(height*scale));
-  const context=canvas.getContext('2d');if(!context)return file;
+  const context=canvas.getContext('2d');if(!context)return {image:file,ratioX:1,ratioY:1};
   context.fillStyle='#fff';context.fillRect(0,0,canvas.width,canvas.height);
   context.imageSmoothingEnabled=true;context.imageSmoothingQuality='high';
-  context.filter='grayscale(1) contrast(1.1)';
-  context.drawImage(bitmap,0,0,canvas.width,canvas.height);
-  return await new Promise(resolve=>canvas.toBlob(blob=>resolve(blob||file),'image/png'));
- }catch(e){return file}finally{bitmap?.close()}
+  context.filter='grayscale(1)';context.drawImage(bitmap,0,0,canvas.width,canvas.height);
+  const image=await new Promise(resolve=>canvas.toBlob(blob=>resolve(blob||file),'image/png'));
+  return image===file?{image:file,ratioX:1,ratioY:1}:{image,ratioX:canvas.width/width,ratioY:canvas.height/height};
+ }catch(e){return {image:file,ratioX:1,ratioY:1}}finally{bitmap?.close()}
+}
+
+async function recheckScreenshotRegions(file,regions,onProgress){
+ if(!regions?.length||typeof createImageBitmap!=='function')return [];
+ let bitmap;const confirmed=[];
+ try{
+  bitmap=await createImageBitmap(file);await shotWorker.setParameters({tessedit_pageseg_mode:'7'});
+  for(let i=0;i<regions.length;i++){
+   onProgress(i+1,regions.length);const region=regions[i],b=region.box,h=b.y1-b.y0,pad=Math.max(12,h*.6);
+   const x=Math.max(0,Math.floor(b.x0-pad)),y=Math.max(0,Math.floor(b.y0-pad*.6));
+   const width=Math.min(bitmap.width-x,Math.ceil(b.x1+pad-x)),height=Math.min(bitmap.height-y,Math.ceil(b.y1+pad*.6-y));if(width<=0||height<=0)continue;
+   const scale=Math.max(1,Math.min(4,96/height)),canvas=document.createElement('canvas');canvas.width=Math.ceil(width*scale);canvas.height=Math.ceil(height*scale);
+   const context=canvas.getContext('2d');context.fillStyle='#fff';context.fillRect(0,0,canvas.width,canvas.height);context.imageSmoothingQuality='high';context.drawImage(bitmap,x,y,width,height,0,0,canvas.width,canvas.height);
+   const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));if(!blob)continue;
+   const result=await shotWorker.recognize(blob),word=String(result.data.text||'').normalize('NFKC').replace(/’/g,"'").trim().toLowerCase();
+   // A crop can confirm a spelling seen in the source passes, never invent one.
+   if(Number(result.data.confidence)>=90&&/^[a-z]+(?:[-'][a-z]+)*$/.test(word)&&region.words.includes(word))confirmed.push(word);
+  }
+ }finally{bitmap?.close();if(shotWorker)await shotWorker.setParameters({tessedit_pageseg_mode:'6'})}
+ return [...new Set(confirmed)];
 }
 
 let shotLightbox=null,shotViewScale=1;
@@ -183,13 +232,16 @@ function ensureShotLightbox(){
  if(shotLightbox)return shotLightbox;
  const dialog=document.createElement('dialog');dialog.id='shot-lightbox';
  dialog.setAttribute('aria-labelledby','shot-lightbox-title');
- dialog.innerHTML='<div class="shot-lightbox-toolbar"><b id="shot-lightbox-title">截图查看</b><button type="button" id="shot-zoom-out" aria-label="缩小截图">缩小 −</button><button type="button" id="shot-zoom-in" aria-label="放大截图">放大 ＋</button><button type="button" id="shot-zoom-fit">适应窗口</button><button type="button" id="shot-zoom-original">原图 100%</button><button type="button" id="shot-zoom-close" autofocus>关闭</button></div><div id="shot-lightbox-stage"><img id="shot-lightbox-image" alt="放大的单词截图" draggable="false"></div><p class="shot-lightbox-note">放大后可上下、左右滚动查看。按 Esc 或“关闭”返回校对。</p>';
+ dialog.innerHTML='<div class="shot-lightbox-toolbar"><b id="shot-lightbox-title">截图查看</b><button type="button" id="shot-zoom-out" aria-label="缩小截图">缩小 −</button><button type="button" id="shot-zoom-in" aria-label="放大截图">放大 ＋</button><button type="button" id="shot-zoom-fit">适应窗口</button><button type="button" id="shot-zoom-original">原图 100%</button><button type="button" id="shot-zoom-close" autofocus>关闭</button></div><div id="shot-lightbox-stage"><img id="shot-lightbox-image" alt="放大的单词截图" draggable="false"></div><p class="shot-lightbox-note">放大后可滚动查看；再次点击图片、按 Esc 或“关闭”返回校对。</p>';
  document.body.append(dialog);shotLightbox=dialog;
  shotEl('shot-zoom-out').onclick=()=>setShotZoom(shotViewScale/1.3);
  shotEl('shot-zoom-in').onclick=()=>setShotZoom(shotViewScale*1.3);
  shotEl('shot-zoom-fit').onclick=fitShotZoom;
  shotEl('shot-zoom-original').onclick=()=>setShotZoom(1);
  shotEl('shot-zoom-close').onclick=()=>dialog.close();
+ shotEl('shot-lightbox-image').onclick=()=>dialog.close();
+ shotEl('shot-lightbox-image').style.cursor='zoom-out';
+ shotEl('shot-lightbox-image').title='点击图片关闭，返回校对';
  dialog.addEventListener('click',event=>{if(event.target===dialog){const r=dialog.getBoundingClientRect();if(event.clientX<r.left||event.clientX>r.right||event.clientY<r.top||event.clientY>r.bottom)dialog.close()}});
  // Enter in this dialog must never submit or advance a quiz underneath it.
  dialog.addEventListener('keydown',event=>event.stopPropagation());
@@ -254,17 +306,25 @@ async function readShots(){
  const button=shotEl('shot-read');if(!shotFiles.length||button.dataset.busy)return;
  button.dataset.busy='1';button.disabled=true;shotEl('shot-files').disabled=true;
  try{
- shotStatus('正在加载识别组件与模型，首次使用可能需要较长时间…');await loadShotOCR();
- shotWorker=await Tesseract.createWorker('eng',1,{logger:m=>{if(m.status==='recognizing text')shotStatus('正在识别文字 '+Math.round((m.progress||0)*100)+'%')}});
- await shotWorker.setParameters({preserve_interword_spaces:'1'});
- let all=[];shotUncertainWords=[];
- for(let i=0;i<shotFiles.length;i++){shotStatus('正在处理第 '+(i+1)+' / '+shotFiles.length+' 张截图…');const image=await prepareShotImage(shotFiles[i]);const result=await shotWorker.recognize(image);all.push(screenshotEnglishText(result.data))}
- const raw=all.join('\n'),parsed=parseShotText(raw);
- const cleaned=parsed.map(x=>x.w).join('\n');
- shotEl('shot-text').value=cleaned;
- const uncertain=[...new Set(shotUncertainWords)];
- shotStatus('识别完成：'+parsed.length+' 个单词，已去重；仅提取每行词首，不拼接后面的提示。'+(uncertain.length?'\n请重点核对这些低置信度单词：'+uncertain.join('、')+'。':'')+'\n请对照截图核对后开始测试；多列截图请先裁成单列。');
- }catch(e){shotStatus('识别失败：'+e.message+' 你仍可在下方粘贴或输入词表。')}
+ shotStatus('正在加载识别组件。每张截图将进行两次识别，并核对单词位置与拼写…');await loadShotOCR();
+ shotWorker=await Tesseract.createWorker('eng',1);
+ await shotWorker.setParameters({preserve_interword_spaces:'1',tessedit_pageseg_mode:'6'});
+ const all=[];shotUncertainWords=[];
+ for(let i=0;i<shotFiles.length;i++){
+  shotStatus('第 '+(i+1)+' / '+shotFiles.length+' 张：正在识别原图（1/2）…');
+  const first=await shotWorker.recognize(shotFiles[i]);
+  const prepared=await prepareShotImage(shotFiles[i]);
+  shotStatus('第 '+(i+1)+' / '+shotFiles.length+' 张：正在复核拼写和位置（2/2）…');
+  const second=await shotWorker.recognize(prepared.image);
+  const result=verifiedScreenshotWords(first.data,second.data,prepared.ratioX,prepared.ratioY);
+  const extra=await recheckScreenshotRegions(shotFiles[i],result.pending,(n,total)=>shotStatus('第 '+(i+1)+' / '+shotFiles.length+' 张：原图局部复核 '+n+' / '+total+'…'));
+  all.push(...result.words,...extra);shotUncertainWords.push(...result.uncertain);
+ }
+ const words=[...new Set(all)],uncertain=[...new Set(shotUncertainWords)].filter(w=>!words.includes(w));
+ if(!words.length){shotStatus('未找到通过两次识别及词列位置复核的单词，原校对内容已保留。请裁剪为单列词表后重试，或按原图手动输入。'+(uncertain.length?'\n未自动导入的疑似文字：'+uncertain.join('、'):'')+'\n没有把疑似文字加入词表。');return}
+ shotEl('shot-text').value=words.join('\n');
+ shotStatus('识别完成：'+words.length+' 个单词通过识别与原图位置复核，已去重。'+(uncertain.length?'\n以下疑似文字未加入词表：'+uncertain.join('、')+'。':'')+'\n请对照原图核对有无漏词，再开始测试。多列或少于3行的截图请先裁剪或手动输入。');
+ }catch(e){shotStatus('识别失败：'+String(e?.message||e)+'。原校对内容已保留，可重试或按原图手动输入。')}
  finally{if(shotWorker){await shotWorker.terminate().catch(()=>{});shotWorker=null}delete button.dataset.busy;button.disabled=!shotFiles.length;shotEl('shot-files').disabled=false}
 }
 
